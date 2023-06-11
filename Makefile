@@ -6,7 +6,10 @@ GCC_FLAGS := -fno-stack-protector\
 			 -I include\
 			 -g\
 			 -c
-LD_SOURCES := *.asm_o *.o
+LD_SOURCES := *.lib *.asm_o *.o
+QEMU_FLAGS := -machine pc\
+			  -vga cirrus\
+			  -m 128M
 
 default: i386
 
@@ -19,5 +22,8 @@ i386:
 	@nasm -felf32 arch/i386/temp_directory.asm -o temp_directory.asm_o
 	@nasm -felf32 arch/header.asm -o header.asm_o
 	@gcc $(GCC_FLAGS) -m32 $(C_SOURCES)
-	@ld -melf_i386 -Tlinker.ld --allow-multiple-definition x64_arithmetics_for_x86.lib $(LD_SOURCES) -o kernel-i386.bin
+	@ld -melf_i386 -Tlinker.ld --allow-multiple-definition $(LD_SOURCES) -o kernel-i386.bin
 	@rm -rf *.o *.asm_o
+
+i386-emu:
+	@kvm $(QEMU_FLAGS) -kernel kernel-i386.bin
