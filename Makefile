@@ -11,12 +11,12 @@ QEMU_FLAGS := -machine pc\
 			  -vga cirrus\
 			  -m 128M
 
-default: i386
+default: i386-build
 
 clean:
 	@rm -rf *.o *.asm_o
 
-i386:
+i386-build:
 	@nasm -felf32 arch/i386/boot.asm -o boot.asm_o
 	@nasm -felf32 arch/i386/interrupts.asm -o interrupts.asm_o
 	@nasm -felf32 arch/i386/temp_directory.asm -o temp_directory.asm_o
