@@ -7,14 +7,6 @@ GCC_FLAGS := -fno-stack-protector\
 			 -g\
 			 -c
 LD_SOURCES := *.asm_o *.o
-QEMU_FLAGS := -machine pc\
-			  -vga cirrus\
-			  -m 256M\
-			  -cdrom iLauncherOS.iso
-ROOTFS = $(shell find initrd)
-TEXTTORM = initrd/
-TMPVAR := $(ROOTFS)
-ROOTFS = $(subst $(TEXTTORM),, $(TMPVAR))
 
 default: i386
 
