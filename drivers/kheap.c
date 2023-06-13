@@ -53,7 +53,12 @@ uint32_t kmalloc(uint32_t size)
     return kmalloc_int(size, 0, 0);
 }
 
-void kfree(void *p)
+uint32_t kclone(void *ptr)
 {
-    heap_mfree(kheap, p);
+    return (uint32_t)heap_mclone(kheap, ptr);
+}
+
+void kfree(void *ptr)
+{
+    heap_mfree(kheap, ptr);
 }

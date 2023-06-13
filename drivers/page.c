@@ -1,35 +1,33 @@
 #include <page.h>
-#define INDEX_FROM_BIT(a) ((a) / 32)
-#define OFFSET_FROM_BIT(a) ((a) % 32)
 
 extern heap_t *kheap;
 
 page_directory_t *kernel_directory = 0;
 page_directory_t *current_directory = 0;
 
-uint32_t *page_frames, page_frames_size;
+uint64_t *page_frames, page_frames_size;
 
 bool page_check_frame(uint32_t address)
 {
     uint32_t frame = address >> 12;
-    uint32_t index = INDEX_FROM_BIT(frame);
-    uint32_t offset = OFFSET_FROM_BIT(frame);
+    uint32_t index = BIT_INDEX(frame);
+    uint32_t offset = BIT_OFFSET(frame);
     return page_frames[index] & (1 << offset);
 }
 
 void page_set_frame(uint32_t address)
 {
     uint32_t frame = address >> 12;
-    uint32_t index = INDEX_FROM_BIT(frame);
-    uint32_t offset = OFFSET_FROM_BIT(frame);
+    uint32_t index = BIT_INDEX(frame);
+    uint32_t offset = BIT_OFFSET(frame);
     page_frames[index] |= (1 << offset);
 }
 
 void page_clear_frame(uint32_t address)
 {
     uint32_t frame = address >> 12;
-    uint32_t index = INDEX_FROM_BIT(frame);
-    uint32_t offset = OFFSET_FROM_BIT(frame);
+    uint32_t index = BIT_INDEX(frame);
+    uint32_t offset = BIT_OFFSET(frame);
     page_frames[index] &= ~(1 << offset);
 }
 
@@ -37,11 +35,11 @@ uint32_t page_find_free_frame()
 {
     if (!page_frames)
         return 0xffffffff;
-    for (uint32_t i = 0; i < INDEX_FROM_BIT(page_frames_size); i++)
+    for (uint32_t i = 0; i < BIT_INDEX(page_frames_size); i++)
     {
-        for (uint8_t j = 0; j < 32; j++)
+        for (uint8_t j = 0; j < 64; j++)
             if (!(page_frames[i] & (1 << j)))
-                return i * 32 + j;
+                return i * 64 + j;
     }
     return 0xffffffff;
 }
@@ -81,8 +79,8 @@ void page_install()
     };
 
     page_frames_size = (uint32_t)-1 >> 12;
-    page_frames = kmalloc(INDEX_FROM_BIT(page_frames_size) * sizeof(uint32_t));
-    memset(page_frames, 0, INDEX_FROM_BIT(page_frames_size) * sizeof(uint32_t));
+    page_frames = kmalloc(BIT_INDEX(page_frames_size) * sizeof(uint64_t));
+    memset(page_frames, 0, BIT_INDEX(page_frames_size) * sizeof(uint64_t));
     kernel_directory = kmalloc_a(sizeof(page_directory_t), 0x1000);
     memset(kernel_directory, 0, sizeof(page_directory_t));
     kernel_directory->physicalAddr = KERNEL_V2P((uint32_t)&kernel_directory->tablesPhysical);
@@ -107,11 +105,6 @@ void switch_page_directory(page_directory_t *dir)
 {
     current_directory = dir;
     asm volatile("mov %0, %%cr3" ::"r"(dir->physicalAddr));
-}
-
-void switch_page(void *page)
-{
-    asm volatile("mov %0, %%cr3" ::"r"((uint32_t)page));
 }
 
 void enable_page()

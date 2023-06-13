@@ -5,6 +5,7 @@ typedef uint64_t (*task_function_t)(int32_t argc, int8_t **argv);
 extern void isr_exit();
 extern uint32_t get_eip();
 extern void switch_context(void *old, void *new);
+extern uint32_t *page_frames, page_frames_size;
 
 task_t *start_task, *current_task;
 register_t saved_context;
@@ -18,7 +19,7 @@ static uint32_t task_pid()
 
 void task_free(task_t *task)
 {
-    kfree(task->context.esp);
+    kfree(task->context.stack);
     kfree(task);
 }
 
@@ -68,6 +69,7 @@ void task_remove(task_t *task, uint8_t state, uint32_t state_info, uint32_t valu
     task->state_info = state_info;
     task->value = value;
     task_node_remove(task->pid);
+    kfree(task);
 }
 
 static void task_helper()
@@ -95,17 +97,16 @@ task_t *task_create(uint8_t *name, void *function, void *flags)
     else
         memcpy(task->name, name, name_length);
     task->pid = task_pid();
-    void *stack = (void *)kmalloc_a(TASK_STACK_SIZE, 0x1000);
-    memset(stack, 0, TASK_STACK_SIZE);
-    task_register_t *context = (uint32_t)stack;
-    context->eip = (uint32_t)isr_exit;
-    register_t *regs = (uint32_t)stack + sizeof(task_register_t);
+    task->context.stack = (void *)kmalloc_a(TASK_STACK_SIZE, 0x1000);
+    memset(task->context.stack, 0, TASK_STACK_SIZE);
+    task_register_t *context = (task_register_t *)task->context.stack;
+    context->eip = (uint64_t)isr_exit;
+    register_t *regs = (task_register_t *)((uint64_t)task->context.stack + sizeof(task_register_t));
     regs->eflags = 0x206;
     regs->cs = 0x08;
     regs->gs = regs->fs = regs->es = regs->ds = 0x10;
     regs->eip = (uint32_t)task_helper;
     task->eip = (uint32_t)function;
-    task->context.esp = (uint32_t)stack;
     task->flags = (uint32_t)flags;
     return task;
 }
@@ -116,11 +117,6 @@ bool task_add(task_t *task)
         return false;
     task_node_add(task);
     return true;
-}
-
-register_t *task_get_regs(task_t *task)
-{
-    return (register_t *)(task->context.esp + 20);
 }
 
 void task_fault(register_t *regs)

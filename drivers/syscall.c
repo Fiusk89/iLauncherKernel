@@ -6,28 +6,14 @@ static void *syscall_handlers[] = {
     heap_mfree,
 };
 
+typedef void *(*syscall_function_t)(uint64_t a, uint64_t b, uint64_t c, uint64_t d, uint64_t e);
+
 void syscall_handler(register_t *regs)
 {
-    if (regs->eax >= sizeof(syscall_handlers) / sizeof(void *))
+    if (regs->eax > sizeof(syscall_handlers) / sizeof(void *) - 1)
         return;
-    void *function = syscall_handlers[regs->eax];
-    uint32_t ret;
-    asm volatile("\
-        push %1;\
-        push %2;\
-        push %3;\
-        push %4;\
-        push %5;\
-        call *%6;\
-        pop %%ebx;\
-        pop %%ebx;\
-        pop %%ebx;\
-        pop %%ebx;\
-        pop %%ebx;\
-    "
-                 : "=a"(ret)
-                 : "r"(regs->edi), "r"(regs->esi), "r"(regs->edx), "r"(regs->ecx), "r"(regs->ebx), "r"(function));
-    regs->eax = ret;
+    syscall_function_t function = (syscall_function_t)syscall_handlers[regs->eax];
+    regs->eax = (uint64_t)function(regs->ebx, regs->ecx, regs->edx, regs->esi, regs->edi);
 }
 
 void syscall_install()

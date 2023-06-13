@@ -5,6 +5,7 @@ C_SOURCES := $(wildcard *.c)\
 GCC_FLAGS := -fno-stack-protector\
 			 -I include\
 			 -g\
+			 -w\
 			 -c
 LD_SOURCES := *.lib *.asm_o *.o
 QEMU_FLAGS := -machine pc\

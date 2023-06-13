@@ -2,6 +2,8 @@
 #define PAGE_H
 #include <kernel.h>
 #define PAGE_SIZE 0x1000
+#define BIT_INDEX(a) ((a) / 64)
+#define BIT_OFFSET(a) ((a) % 64)
 
 typedef struct page
 {
@@ -33,7 +35,6 @@ typedef struct page_directory
 extern page_directory_t *kernel_directory;
 
 void page_install();
-void switch_page(void *page);
 void switch_page_directory(page_directory_t *new);
 page_directory_t *clone_directory(page_directory_t *src);
 page_t *get_page(uint32_t address, bool make, page_directory_t *dir);

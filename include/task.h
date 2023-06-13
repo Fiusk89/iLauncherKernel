@@ -42,7 +42,8 @@ typedef struct task
     uint32_t active_time;
     struct task_context
     {
-        uint32_t esp;
+        void *stack;
+        struct page_directory *page;
     } context;
     uint64_t flags, value;
     struct task *prev;
