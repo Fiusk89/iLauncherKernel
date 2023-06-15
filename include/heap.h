@@ -22,6 +22,7 @@ typedef struct heap_node
 } heap_node_t;
 
 heap_t *heap_create(uint64_t start, uint64_t end, uint64_t max, uint8_t is_kernel, uint8_t is_writable);
+uint64_t heap_get_used_size(heap_t *heap);
 void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align);
 void *heap_mrealloc(heap_t *heap, void *ptr, uint64_t size);
 void *heap_mclone(heap_t *heap, void *ptr);

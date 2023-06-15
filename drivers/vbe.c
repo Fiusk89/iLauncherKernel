@@ -125,22 +125,21 @@ void vbe_start()
                                              vbe_mode_info->width,
                                              vbe_mode_info->height,
                                              vbe_mode_info->bpp);
+        canvas_t *vbe_canvas2 = canvas_create(vbe_mode_info->framebuffer,
+                                             vbe_mode_info->width,
+                                             vbe_mode_info->height,
+                                             vbe_mode_info->bpp);
         float xt = -(float)vbe_canvas->width;
         pit_t delta_current = 0, delta_last = 0, old_delta = 0;
         float delta_time = 0;
         float x = 0, y = 0;
-        uint8_t gray = 0;
-        int8_t direction = -1;
         while (true)
         {
             delta_current = current_task->active_time;
             delta_time = ((float)delta_current - (float)delta_last) / PIT_HZ;
             x += mouse_get_packet(&mouse_ps2, 3);
             y -= mouse_get_packet(&mouse_ps2, 4);
-            canvas_fillscreen(vbe_canvas, (((((gray) << 16) & 0xff) | (((gray) << 8) & 0xff) | ((gray)&0xff))));
-            if (gray == 0 || gray == 255)
-                direction *= -1;
-            gray += direction;
+            canvas_fillscreen(vbe_canvas, 0xffffffff);
             canvas2framebuffer(vbe_canvas);
             delta_last = delta_current;
             uint8_t keychar = keyboard_get_key();
