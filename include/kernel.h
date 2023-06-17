@@ -7,6 +7,7 @@
 #define RGB2GRAY(c) (((((c) >> 16) & 0xff) + (((c) >> 8) & 0xff) + ((c)&0xff)) / 3)
 #include <ctype.h>
 #include <multiboot.h>
+#include <screen.h>
 #include <rle.h>
 #include <stdlib.h>
 #include <string.h>

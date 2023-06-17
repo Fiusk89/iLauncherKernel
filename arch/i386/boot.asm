@@ -59,7 +59,6 @@ start_3GB:
     mov dword [temp_directory], 0
     invlpg[0]
     mov esp, stack_end
-    mov ebp, stack_end
     add ebx, KERNEL_BASE_ADDRESS
 	push ebx
 	call kernel

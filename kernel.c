@@ -39,27 +39,11 @@ void reboot()
         farjump();
 }
 
-void kernel_task()
-{
-    // sleep(1000);
-    // return;
-    // uint8_t byte = *((uint8_t *)0x00100000);
-    // volatile uint32_t a = 0;
-    // volatile uint32_t i = 8 / a;
-    vbe_start();
-}
-
 uint8_t canvas_rgb_grayscale(uint32_t x, uint32_t y, uint32_t c);
 
 void kernel(multiboot_info_t *info)
 {
     multiboot_module_t *mods = KERNEL_P2V(info->mods_addr);
-    if (info->mods_count > 0)
-    {
-        placement_address = KERNEL_P2V(mods[0].mod_end);
-        ilrdfs_install(KERNEL_P2V(mods[0].mod_start));
-        ilrdfs_list_nodes();
-    }
     gdt_install();
     idt_install();
     isr_install();
@@ -75,6 +59,8 @@ void kernel(multiboot_info_t *info)
     page_install();
     acpi_install();
     task_install();
+    screen_install();
+    vbe_install();
     int8_t exceptions[] = {
         0,
         4,
@@ -89,6 +75,11 @@ void kernel(multiboot_info_t *info)
     };
     for (uint8_t i = 0; exceptions[i] != -1; i++)
         isr_add_handler(exceptions[i] ? (uint8_t)exceptions[i] : 0, task_fault);
-    // pc_speaker_install();
-    task_add(task_create("TASK2", kernel_task, 0));
+    screen_info_t *test_screen = screen_get_info();
+    for (uint32_t i = 0; i < (test_screen->current_video_mode->width / 8) *
+                                 (test_screen->current_video_mode->height / 16) * sizeof(uint16_t);
+         i++)
+    {
+        test_screen->text_framebuffer[i] = ' ' | (((0x00 << 4) | (0x0f & 0x0f)) << 8);
+    }
 }
