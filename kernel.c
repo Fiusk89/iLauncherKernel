@@ -76,10 +76,11 @@ void kernel(multiboot_info_t *info)
     for (uint8_t i = 0; exceptions[i] != -1; i++)
         isr_add_handler(exceptions[i] ? (uint8_t)exceptions[i] : 0, task_fault);
     screen_info_t *test_screen = screen_get_info();
+    uint8_t chr = 0;
     for (uint32_t i = 0; i < (test_screen->current_video_mode->width / 8) *
                                  (test_screen->current_video_mode->height / 16) * sizeof(uint16_t);
          i++)
     {
-        test_screen->text_framebuffer[i] = ' ' | (((0x00 << 4) | (0x0f & 0x0f)) << 8);
+        test_screen->text_framebuffer[i] = chr++ | (((0x00 << 4) | (0x0f & 0x0f)) << 8);
     }
 }

@@ -30,9 +30,9 @@ typedef struct screen_mode_info
     uint16_t flags;
     uint32_t framebuffer;
     uint16_t mode;
-    uint16_t width;
-    uint16_t height;
-    uint16_t pitch;
+    uint16_t width, twidth;
+    uint16_t height, theight;
+    uint16_t pitch, tpitch;
     uint8_t bpp;
 } screen_mode_info_t;
 

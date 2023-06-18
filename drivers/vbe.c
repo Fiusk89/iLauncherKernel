@@ -93,6 +93,9 @@ void *vbe_mode_list()
         vesa->video_modes[index].width = mode_info->width;
         vesa->video_modes[index].height = mode_info->height;
         vesa->video_modes[index].pitch = mode_info->pitch;
+        vesa->video_modes[index].twidth = mode_info->width / 8;
+        vesa->video_modes[index].theight = mode_info->height / 16;
+        vesa->video_modes[index].tpitch = sizeof(uint16_t) * (mode_info->width / 8);
         vesa->video_modes[index].bpp = mode_info->bpp;
         index++;
     }

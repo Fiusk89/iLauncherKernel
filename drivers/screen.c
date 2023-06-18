@@ -56,17 +56,18 @@ void screen_service()
             sleep(500);
         if (current_screen->current_video_mode->flags & (1 << 1))
         {
-            uint16_t width = current_screen->current_video_mode->width / 8;
-            uint16_t height = current_screen->current_video_mode->height / 16;
+            uint16_t width = current_screen->current_video_mode->width;
+            uint16_t height = current_screen->current_video_mode->height;
             uint8_t bpp = round((float)current_screen->current_video_mode->bpp / 8.0f);
-            for (uint16_t ty = 0; ty < height; ty++)
+            uint8_t *textbuffer_offset = (uint8_t *)(current_screen->text_framebuffer);
+            uint8_t *textbuffer_offset2 = (uint8_t *)(current_screen->text_framebuffer +
+                                                      (sizeof(uint16_t) * (screen_cursor_position * 8)));
+            for (uint16_t ty = 0; ty < height; ty += 16)
             {
-                for (uint16_t tx = 0; tx < width; tx++)
+                for (uint16_t tx = 0; tx < width; tx += 8)
                 {
                     if (current_task->active_time - saved_timer >= 150)
                         screen_cursor = screen_cursor ? false : true, saved_timer = current_task->active_time;
-                    uint8_t *textbuffer_offset = (uint8_t *)(current_screen->text_framebuffer +
-                                                             (sizeof(uint16_t) * (ty * width + tx)));
                     uint8_t *gylph = font + 2 + (textbuffer_offset[0] * font[1]);
                     for (uint8_t y = 0; y < 16; y++)
                     {
@@ -75,9 +76,9 @@ void screen_service()
                             if (!textbuffer_offset[0])
                                 break;
                             uint24_t *framebuffer_offset = (uint24_t *)(current_screen->current_video_mode->framebuffer +
-                                                                        (((ty * 16) + y) *
+                                                                        ((ty + y) *
                                                                              current_screen->current_video_mode->width +
-                                                                         ((tx * 8) + x)) *
+                                                                         (tx + x)) *
                                                                             bpp);
                             if (gylph[y] & screen_text_mask[x])
                                 framebuffer_offset->value = vga_colors[textbuffer_offset[1] & 0x0f];
@@ -85,8 +86,6 @@ void screen_service()
                                 framebuffer_offset->value = vga_colors[(textbuffer_offset[1] >> 4) & 0x0f];
                         }
                     }
-                    textbuffer_offset = (uint8_t *)(current_screen->text_framebuffer +
-                                                    (sizeof(uint16_t) * (screen_cursor_position * 8)));
                     if (screen_cursor)
                         for (uint8_t y = screen_cursor_start; y < screen_cursor_end; y++)
                         {
@@ -99,9 +98,10 @@ void screen_service()
                                                                         (current_screen->current_video_mode->pitch * y));
                             for (uint8_t x = 0; x < 8; x++)
                             {
-                                framebuffer_offset[x].value = vga_colors[textbuffer_offset[1] & 0x0f];
+                                framebuffer_offset[x].value = vga_colors[textbuffer_offset2[1] & 0x0f];
                             }
                         }
+                    textbuffer_offset += 2;
                 }
             }
         }
