@@ -84,9 +84,9 @@ void screen_service()
                     framebuffer_offset = framebuffer_offset_old;
                     for (uint8_t y = 0; y < 16; y++)
                     {
-                        uint16_t *framebuffer_offset16 = (uint16_t *)framebuffer_offset + tx;
-                        uint24_t *framebuffer_offset24 = (uint24_t *)framebuffer_offset + tx;
-                        uint32_t *framebuffer_offset32 = (uint24_t *)framebuffer_offset + tx;
+                        uint16_t *framebuffer_offset16 = (uint16_t *)(framebuffer_offset + tx * sizeof(uint16_t));
+                        uint24_t *framebuffer_offset24 = (uint24_t *)(framebuffer_offset + tx * sizeof(uint24_t));
+                        uint32_t *framebuffer_offset32 = (uint24_t *)(framebuffer_offset + tx * sizeof(uint24_t));
                         for (uint8_t x = 0; x < 8; x++)
                         {
                             if (gylph[y] & screen_text_mask[x])
