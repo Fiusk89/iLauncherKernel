@@ -80,5 +80,14 @@ void kernel(multiboot_info_t *info)
     VIDEO_MEMORY = (uint32_t)screen_get_info()->text_framebuffer;
     vga_width = screen_get_info()->current_video_mode->twidth;
     vga_height = screen_get_info()->current_video_mode->theight;
-    clear_screen(0x0f);
+    clear_screen();
+    uint8_t chr[2];
+    while (true)
+    {
+        chr[0] = keyboard_get_key();
+        chr[1] = '\0';
+        chr[0] == 'r' ? reboot() : 0;
+        chr[0] == 's' ? poweroff() : 0;
+        kprintf(chr);
+    }
 }

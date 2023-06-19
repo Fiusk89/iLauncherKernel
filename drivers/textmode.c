@@ -29,28 +29,27 @@ void set_cursor_pos(uint16_t x, uint16_t y)
     screen_cursor_position = y * vga_width + x;
 }
 
-void clear_screen(uint8_t color)
+void clear_screen()
 {
-    if (!color)
-        color = 0x0f;
     uint16_t *screen = VIDEO_MEMORY;
-    for (uint16_t i = 0; i < vga_width * vga_height; i++)
-        *screen++ = (((color & 0x0f) << 8) | (0x20 & 0xff));
+    for (uint32_t i = 0; i < vga_width * vga_height; i++)
+        *screen++ = (((0x0f & 0x0f) << 8) | (' ' & 0xff));
     set_cursor_pos(0, 0);
 }
 
 void scroll()
 {
-    uint8_t *screen = VIDEO_MEMORY;
-    for (uint16_t i = 0; i < vga_width * (vga_height - 1) * sizeof(uint16_t); i++)
-        screen[i] = screen[i + (vga_width * sizeof(uint16_t))];
+    uint16_t *screen = VIDEO_MEMORY;
+    for (uint32_t i = 0; i < vga_width * (vga_height - 1); i++)
+        screen[i] = screen[i + vga_width];
+    for (uint32_t i = vga_width * (vga_height - 1); i < vga_width * vga_height; i++)
+        screen[i] = (((0x0f & 0x0f) << 8) | (' ' & 0xff));
 }
 
 void move_next_cursor()
 {
-    uint32_t curpos = get_cursor_pos();
-    uint16_t y = curpos / vga_width;
-    uint16_t x = curpos % vga_width;
+    uint16_t y = screen_cursor_position / vga_width;
+    uint16_t x = screen_cursor_position % vga_width;
     x += 1;
     if (x == vga_width)
     {
@@ -68,12 +67,12 @@ void move_next_cursor()
 
 void dos_print_char(char c, char colors, char toblink)
 {
-    uint32_t curpos = get_cursor_pos() * sizeof(uint16_t);
+    uint32_t curpos = screen_cursor_position * sizeof(uint16_t);
     uint8_t *screen = (char *)curpos + VIDEO_MEMORY;
     if (c == '\n')
     {
         next_line();
-        curpos = get_cursor_pos() * sizeof(uint16_t);
+        curpos = screen_cursor_position * sizeof(uint16_t);
         screen = (char *)curpos + VIDEO_MEMORY;
         return;
     }
@@ -86,7 +85,7 @@ void dos_print(char *text, char colors, char toblink)
 {
     if (!text)
         return;
-    for (uint64_t i = 0; text[i] != '\0'; i++)
+    for (uint32_t i = 0; text[i] != '\0'; i++)
     {
         dos_print_char(text[i], colors, toblink);
     }
@@ -133,9 +132,8 @@ void dos_print_hex(uint32_t hexcode, char colors, char toblink)
 
 void next_line()
 {
-    uint32_t curpos = get_cursor_pos();
-    uint16_t y = curpos / vga_width;
-    uint16_t x = curpos % vga_width;
+    uint16_t y = screen_cursor_position / vga_width;
+    uint16_t x = screen_cursor_position % vga_width;
     x = 0;
     y += 1;
     if (y == vga_height)

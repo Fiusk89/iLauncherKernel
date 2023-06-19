@@ -11,7 +11,7 @@ void dos_print_char(char c, char colors, char toblink);
 void dos_print(char *text, char colors, char toblink);
 void dos_print_hex(uint32_t hexcode, char colors, char toblink);
 void rm_char_in_pos();
-void clear_screen(uint8_t color);
+void clear_screen();
 void next_line();
 void scroll();
 #endif
