@@ -2,7 +2,6 @@
 
 screen_info_t *start_screen;
 screen_info_t *current_screen;
-uint8_t screen_mode = 0x00;
 uint8_t screen_cursor = false;
 uint8_t screen_cursor_start = 14, screen_cursor_end = 16;
 uint32_t screen_cursor_position = 0;
@@ -53,12 +52,22 @@ void screen_service()
     while (true)
     {
         if (!start_screen || !current_screen)
+        {
             sleep(500);
+            continue;
+        }
         if (current_screen->current_video_mode->flags & (1 << 1))
         {
             uint16_t width = current_screen->current_video_mode->width;
             uint16_t height = current_screen->current_video_mode->height;
-            uint8_t bpp = round((float)current_screen->current_video_mode->bpp / 8.0f);
+            uint8_t bpp[2] = {
+                current_screen->current_video_mode->bpp,
+                round((float)current_screen->current_video_mode->bpp / 8.0f),
+            };
+            uint16_t cursor_pos[2] = {
+                screen_cursor_position % current_screen->current_video_mode->twidth,
+                screen_cursor_position / current_screen->current_video_mode->twidth,
+            };
             uint8_t *textbuffer_offset = (uint8_t *)(current_screen->text_framebuffer);
             uint8_t *textbuffer_offset2 = (uint8_t *)(current_screen->text_framebuffer +
                                                       (sizeof(uint16_t) * (screen_cursor_position * 8)));
@@ -75,32 +84,67 @@ void screen_service()
                         {
                             if (!textbuffer_offset[0])
                                 break;
-                            uint24_t *framebuffer_offset = (uint24_t *)(current_screen->current_video_mode->framebuffer +
-                                                                        ((ty + y) *
-                                                                             current_screen->current_video_mode->width +
-                                                                         (tx + x)) *
-                                                                            bpp);
+                            void *framebuffer_offset = (void *)(current_screen->current_video_mode->framebuffer +
+                                                                ((ty + y) *
+                                                                     current_screen->current_video_mode->width +
+                                                                 (tx + x)) *
+                                                                    bpp[1]);
+                            uint16_t *framebuffer_offset16 = (uint16_t *)framebuffer_offset;
+                            uint24_t *framebuffer_offset24 = (uint24_t *)framebuffer_offset;
+                            uint32_t *framebuffer_offset32 = (uint24_t *)framebuffer_offset;
                             if (gylph[y] & screen_text_mask[x])
-                                framebuffer_offset->value = vga_colors[textbuffer_offset[1] & 0x0f];
-                            else
-                                framebuffer_offset->value = vga_colors[(textbuffer_offset[1] >> 4) & 0x0f];
-                        }
-                    }
-                    if (screen_cursor)
-                        for (uint8_t y = screen_cursor_start; y < screen_cursor_end; y++)
-                        {
-                            if (screen_cursor_position >
-                                current_screen->current_video_mode->pitch *
-                                    current_screen->current_video_mode->height)
-                                break;
-                            uint24_t *framebuffer_offset = (uint24_t *)(current_screen->current_video_mode->framebuffer +
-                                                                        (screen_cursor_position * 8) +
-                                                                        (current_screen->current_video_mode->pitch * y));
-                            for (uint8_t x = 0; x < 8; x++)
                             {
-                                framebuffer_offset[x].value = vga_colors[textbuffer_offset2[1] & 0x0f];
+                                if (bpp[0] == 32)
+                                    *framebuffer_offset32 = vga_colors[textbuffer_offset2[1] & 0x0f];
+                                else if (bpp[0] == 24)
+                                    framebuffer_offset24->value = vga_colors[textbuffer_offset2[1] & 0x0f];
+                                else if (bpp[0] == 16)
+                                    *framebuffer_offset16 = vga_colors[textbuffer_offset2[1] & 0x0f];
+                            }
+                            else
+                            {
+                                if (bpp[0] == 32)
+                                    *framebuffer_offset32 = vga_colors[(textbuffer_offset2[1] >> 4) & 0x0f];
+                                else if (bpp[0] == 24)
+                                    framebuffer_offset24->value = vga_colors[(textbuffer_offset2[1] >> 4) & 0x0f];
+                                else if (bpp[0] == 16)
+                                    *framebuffer_offset16 = vga_colors[(textbuffer_offset2[1] >> 4) & 0x0f];
                             }
                         }
+                    }
+                    for (uint8_t y = screen_cursor_start; y < screen_cursor_end; y++)
+                    {
+                        if (cursor_pos[0] * 8 + cursor_pos[1] * 16 >
+                            current_screen->current_video_mode->width *
+                                current_screen->current_video_mode->height)
+                            break;
+                        void *framebuffer_offset = (void *)(current_screen->current_video_mode->framebuffer +
+                                                            (cursor_pos[0] * 8 * bpp[1]) +
+                                                            (current_screen->current_video_mode->pitch * (y + cursor_pos[1] * 16)));
+                        uint16_t *framebuffer_offset16 = (uint16_t *)framebuffer_offset;
+                        uint24_t *framebuffer_offset24 = (uint24_t *)framebuffer_offset;
+                        uint32_t *framebuffer_offset32 = (uint32_t *)framebuffer_offset;
+                        if (screen_cursor)
+                            for (uint8_t x = 0; x < 8; x++)
+                            {
+                                if (bpp[0] == 32)
+                                    framebuffer_offset32[x] = vga_colors[textbuffer_offset2[1] & 0x0f];
+                                else if (bpp[0] == 24)
+                                    framebuffer_offset24[x].value = vga_colors[textbuffer_offset2[1] & 0x0f];
+                                else if (bpp[0] == 16)
+                                    framebuffer_offset16[x] = vga_colors[textbuffer_offset2[1] & 0x0f];
+                            }
+                        else if (!textbuffer_offset2[0])
+                            for (uint8_t x = 0; x < 8; x++)
+                            {
+                                if (bpp[0] == 32)
+                                    framebuffer_offset32[x] = vga_colors[0];
+                                else if (bpp[0] == 24)
+                                    framebuffer_offset24[x].value = vga_colors[0];
+                                else if (bpp[0] == 16)
+                                    framebuffer_offset16[x] = vga_colors[0];
+                            }
+                    }
                     textbuffer_offset += 2;
                 }
             }

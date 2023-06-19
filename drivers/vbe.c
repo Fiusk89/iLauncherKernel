@@ -115,18 +115,15 @@ void vbe_install()
         ;
     vbe_modes = vbe_mode_list();
     uint32_t mode_length = vbe_modes->video_modes_length;
-    uint32_t mode_xy[2] = {
-        0,
-        0,
-    };
+    uint32_t mode_xy = 0;
     for (uint32_t i = 0; i < mode_length; i++)
     {
-        mode_xy[0] = vbe_modes->video_modes[i].width * vbe_modes->video_modes[i].height;
-        if (mode_xy[0] < vbe_modes->video_modes[0].width * vbe_modes->video_modes[0].height)
-            continue;
-        if (mode_xy[0] >= mode_xy[1] && vbe_modes->video_modes[i].bpp >= 24)
+        if (vbe_modes->video_modes[i].width * vbe_modes->video_modes[i].height > mode_xy &&
+            vbe_modes->video_modes[i].bpp >= 24)
+        {
             vbe_modes->current_video_mode = &vbe_modes->video_modes[i];
-        mode_xy[1] = vbe_modes->video_modes[i].width * vbe_modes->video_modes[i].height;
+            mode_xy = vbe_modes->video_modes[i].width * vbe_modes->video_modes[i].height;
+        }
     }
     vbe_set_mode(vbe_modes->current_video_mode->mode);
     screen_add(vbe_modes);

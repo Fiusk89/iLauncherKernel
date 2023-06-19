@@ -38,6 +38,10 @@ typedef struct screen_mode_info
 
 typedef struct screen_info
 {
+    uint8_t mode;
+    uint8_t cursor;
+    uint8_t cursor_start, cursor_end;
+    uint32_t cursor_position;
     uint16_t video_modes_length;
     screen_mode_info_t *video_modes;
     screen_mode_info_t *current_video_mode;

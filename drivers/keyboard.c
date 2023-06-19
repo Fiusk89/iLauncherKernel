@@ -301,6 +301,8 @@ void ScanKey(keyboard_t *keyboard, uint8_t scancode)
 					keyboard->Key = keyboard->shift[scancode];
 				else
 					keyboard->Key = keyboard->base[scancode];
+			char key[2] = {keyboard->Key, '\0'};
+			kprintf(key);
 			break;
 			/*case UP:
 			  mouse_ps2.packet[4] = 4;
