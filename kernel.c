@@ -61,33 +61,13 @@ void kernel(multiboot_info_t *info)
     task_install();
     screen_install();
     vbe_install();
-    int8_t exceptions[] = {
-        0,
-        4,
-        6,
-        8,
-        10,
-        11,
-        12,
-        13,
-        14,
-        -1,
-    };
-    for (uint8_t i = 0; exceptions[i] != -1; i++)
-        isr_add_handler(exceptions[i] ? (uint8_t)exceptions[i] : 0, task_fault);
     extern uint32_t VIDEO_MEMORY;
     extern uint16_t vga_width, vga_height;
-    VIDEO_MEMORY = (uint32_t)screen_get_info()->text_framebuffer;
-    vga_width = screen_get_info()->current_video_mode->twidth;
-    vga_height = screen_get_info()->current_video_mode->theight;
-    clear_screen();
-    uint8_t chr[2];
-    while (true)
+    if (screen_get_info())
     {
-        chr[0] = keyboard_get_key();
-        chr[1] = '\0';
-        chr[0] == 'r' ? reboot() : 0;
-        chr[0] == 's' ? poweroff() : 0;
-        kprintf(chr);
+        VIDEO_MEMORY = (uint32_t)screen_get_info()->text_framebuffer;
+        vga_width = screen_get_info()->current_video_mode->twidth;
+        vga_height = screen_get_info()->current_video_mode->theight;
     }
+    clear_screen();
 }

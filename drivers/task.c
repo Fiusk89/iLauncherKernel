@@ -155,4 +155,18 @@ void task_install()
     memset(start_task, 0, sizeof(task_t));
     strcpy(start_task->name, "iLauncherKernel");
     current_task = start_task;
+    int8_t exceptions[] = {
+        0,
+        4,
+        6,
+        8,
+        10,
+        11,
+        12,
+        13,
+        14,
+        -1,
+    };
+    for (uint8_t i = 0; exceptions[i] != -1; i++)
+        isr_add_handler(exceptions[i] ? (uint8_t)exceptions[i] : 0, task_fault);
 }

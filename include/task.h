@@ -44,6 +44,7 @@ typedef struct task
     {
         void *stack;
         struct page_directory *page;
+        struct heap *heap;
     } context;
     uint64_t flags, value;
     struct task *prev;

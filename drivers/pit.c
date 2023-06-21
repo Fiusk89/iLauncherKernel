@@ -8,8 +8,7 @@ void pit_handler(register_t *r)
     if (current_task)
     {
         current_task->active_time++;
-        if (pit_delay++ >= 20)
-            pit_delay = 0, schedule();
+        schedule();
     }
 }
 

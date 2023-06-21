@@ -50,33 +50,32 @@ void screen_add(screen_info_t *screen)
 
 void screen_service()
 {
-    pit_t saved_timer = current_task->active_time;
+    pit_t saved_timer;
     while (true)
     {
-        if (!start_screen || !current_screen || screen_is_empty)
+        if (screen_is_empty || !start_screen || !current_screen)
             continue;
         if (current_screen->current_video_mode->flags & (1 << 1))
         {
-            uint16_t width = current_screen->current_video_mode->width;
-            uint16_t height = current_screen->current_video_mode->height;
             uint8_t bpp[2] = {
                 current_screen->current_video_mode->bpp,
                 round((float)current_screen->current_video_mode->bpp / 8.0f),
             };
+            uint32_t framebuffer_size = current_screen->current_video_mode->pitch *
+                                        current_screen->current_video_mode->height;
+            uint16_t width = current_screen->current_video_mode->width * bpp[1];
+            uint16_t height = current_screen->current_video_mode->height;
             uint16_t cursor_pos[2] = {
                 (screen_cursor_position % current_screen->current_video_mode->twidth) * 8,
                 (screen_cursor_position / current_screen->current_video_mode->twidth) * 16,
             };
-            uint8_t *textbuffer_offset = (uint8_t *)(current_screen->text_framebuffer);
-            uint8_t *textbuffer_offset2 = (uint8_t *)(current_screen->text_framebuffer +
-                                                      (sizeof(uint16_t) * screen_cursor_position));
-            for (uint16_t ty = 0; ty < height; ty += 16)
+            uint8_t *textbuffer_offset = (uint8_t *)current_screen->text_framebuffer;
+            uint8_t *textbuffer_offset2 = (uint8_t *)&current_screen->text_framebuffer[screen_cursor_position];
+            for (uint32_t ty = 0; ty < framebuffer_size; ty += current_screen->current_video_mode->pitch * 16)
             {
-                void *framebuffer_offset = (void *)(current_screen->current_video_mode->framebuffer +
-                                                    ty *
-                                                        current_screen->current_video_mode->pitch);
+                void *framebuffer_offset = (void *)(current_screen->current_video_mode->framebuffer + ty);
                 void *framebuffer_offset_old = framebuffer_offset;
-                for (uint16_t tx = 0; tx < width; tx += 8)
+                for (uint32_t tx = 0; tx < width; tx += 8 * bpp[1])
                 {
                     if (current_task->active_time - saved_timer >= 150)
                         screen_cursor = screen_cursor ? false : true, saved_timer = current_task->active_time;
@@ -84,9 +83,9 @@ void screen_service()
                     framebuffer_offset = framebuffer_offset_old;
                     for (uint8_t y = 0; y < 16; y++)
                     {
-                        uint16_t *framebuffer_offset16 = (uint16_t *)(framebuffer_offset + tx * sizeof(uint16_t));
-                        uint24_t *framebuffer_offset24 = (uint24_t *)(framebuffer_offset + tx * sizeof(uint24_t));
-                        uint32_t *framebuffer_offset32 = (uint24_t *)(framebuffer_offset + tx * sizeof(uint24_t));
+                        uint16_t *framebuffer_offset16 = (uint16_t *)(framebuffer_offset + tx);
+                        uint24_t *framebuffer_offset24 = (uint24_t *)(framebuffer_offset + tx);
+                        uint32_t *framebuffer_offset32 = (uint24_t *)(framebuffer_offset + tx);
                         for (uint8_t x = 0; x < 8; x++)
                         {
                             if (gylph[y] & screen_text_mask[x])

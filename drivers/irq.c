@@ -28,20 +28,20 @@ void irq_handler(register_t regs)
     uint16_t irq_mask = 1 << irq;
     uint8_t irq_is_masked = pic_cache_irq_mask & irq_mask;
     uint8_t irq_is_fake = ~pic_read_irq_register(PIC_READ_ISR) & irq_mask;
-    if (irq != 0 && irq_is_masked | irq_is_fake)
+    if (irq_is_masked | irq_is_fake)
     {
-        kprintf("FAKE %s IRQ[%u]!\n", irq > 7 ? "SLAVE" : "MASTER", irq);
-        if (irq_is_fake)
+        // kprintf("FAKE %s IRQ[%u]!\n", irq > 7 ? "SLAVE" : "MASTER", irq);
+        if (irq_is_fake && irq > 2)
         {
             if (irq > 7)
                 pic_send_eoi(PIC_CASCADE, irq_is_masked);
+            irq_spurious++;
         }
-        else
+        else if (irq > 2)
         {
-            pic_send_eoi(irq, irq_is_masked);
+            if (!irq_handlers[irq])
+                pic_send_eoi(irq, irq_is_masked), irq_spurious++;
         }
-        irq_spurious++;
-        return;
     }
     if (irq_handlers[irq])
     {
