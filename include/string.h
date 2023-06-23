@@ -4,8 +4,8 @@
 
 uint32_t strlen(char *str);
 void reverse(char *s);
-void *memcpy(void *dest, void *src, uint32_t n);
-void *memset(void *dest, uint32_t val, uint32_t n);
+void *memcpy(void *dest, void *src, uint32_t size);
+void *memset(void *dest, uint8_t val, uint32_t size);
 bool strcmp(char *str1, char *str2);
 bool strncmp(const char *s1, const char *s2, unsigned int n);
 char *strcpy(char *str1, char *str2);

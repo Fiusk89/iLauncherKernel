@@ -44,36 +44,20 @@ float ufloat(float num)
         return num;
 }
 
-void *memcpy(void *dest, void *src, uint32_t n)
+void *memcpy(void *dest, void *src, uint32_t size)
 {
-    uint32_t num_dwords = n / sizeof(uint64_t);
-    uint32_t num_bytes = n % sizeof(uint64_t);
-    uint64_t *dest64 = (uint64_t *)dest;
-    uint8_t *dest8 = ((uint8_t *)dest) + num_dwords * sizeof(uint64_t);
-    uint64_t *src64 = (uint64_t *)src;
-    uint8_t *src8 = ((uint8_t *)src) + num_dwords * sizeof(uint64_t);
-    for (uint32_t i = 0; i < num_dwords; i++)
-        *dest64++ = *src64++;
-    for (uint32_t i = 0; i < num_bytes; i++)
+    uint8_t *dest8 = (uint8_t *)dest;
+    uint8_t *src8 = (uint8_t *)src;
+    while (size--)
         *dest8++ = *src8++;
     return dest;
 }
 
-void *memset(void *dest, uint32_t val, uint32_t n)
+void *memset(void *dest, uint8_t val, uint32_t size)
 {
-    uint32_t num_dwords = n / sizeof(uint64_t);
-    uint32_t num_bytes = n % sizeof(uint64_t);
-    uint64_t *dest64 = (uint64_t *)dest;
-    uint8_t *dest8 = ((uint8_t *)dest) + num_dwords * sizeof(uint64_t);
-    uint8_t val8 = (uint8_t)val;
-    uint64_t val64 = (val & 0xFFULL);
-    val64 |= ((val64 << 8) & 0xFF00ULL);
-    val64 |= ((val64 << 16) & 0xFFFF0000ULL);
-    val64 |= ((val64 << 32) & 0xFFFFFFFF00000000ULL);
-    for (uint32_t i = 0; i < num_dwords; i++)
-        *dest64++ = val64;
-    for (uint32_t i = 0; i < num_bytes; i++)
-        *dest8++ = val8;
+    uint8_t *dest8 = (uint8_t *)dest;
+    while (size--)
+        *dest8++ = val;
     return dest;
 }
 

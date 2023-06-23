@@ -105,7 +105,7 @@ void *vbe_mode_list()
 void vbe_install()
 {
     uint32_t colors = 0;
-    memcpy(0x9500, "VBE2", 4);
+    memcpy((void *)0x9500, "VBE2", 4);
     register16_t reg_in = {0};
     register16_t reg_out = {0};
     reg_in.ax = 0x4F00;

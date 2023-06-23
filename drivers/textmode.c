@@ -3,6 +3,7 @@
 uint16_t cursor_pos = -1;
 uint32_t VIDEO_MEMORY = KERNEL_P2V(0xb8000);
 uint16_t vga_width = 80, vga_height = 25;
+uint8_t vga_cursor_color = 0x07;
 extern uint32_t screen_cursor_position;
 
 uint32_t get_cursor_pos()
@@ -33,7 +34,7 @@ void clear_screen()
 {
     uint16_t *screen = VIDEO_MEMORY;
     for (uint32_t i = 0; i < vga_width * vga_height; i++)
-        *screen++ = (((0x0f & 0x0f) << 8) | (' ' & 0xff));
+        *screen++ = (((vga_cursor_color & 0x0f) << 8) | (' ' & 0xff));
     set_cursor_pos(0, 0);
 }
 
@@ -43,7 +44,7 @@ void scroll()
     for (uint32_t i = 0; i < vga_width * (vga_height - 1); i++)
         screen[i] = screen[i + vga_width];
     for (uint32_t i = vga_width * (vga_height - 1); i < vga_width * vga_height; i++)
-        screen[i] = (((0x0f & 0x0f) << 8) | (' ' & 0xff));
+        screen[i] = (((vga_cursor_color & 0x0f) << 8) | (' ' & 0xff));
 }
 
 void move_next_cursor()

@@ -41,6 +41,20 @@ void reboot()
 
 uint8_t canvas_rgb_grayscale(uint32_t x, uint32_t y, uint32_t c);
 
+uint8_t chr[0] = {
+    '\0',
+    '\0',
+};
+
+void loop()
+{
+    while (true)
+        if (keyboard_get_key())
+            reboot();
+        else
+            kprintf(chr), chr[0]++;
+}
+
 void kernel(multiboot_info_t *info)
 {
     multiboot_module_t *mods = KERNEL_P2V(info->mods_addr);
@@ -58,9 +72,9 @@ void kernel(multiboot_info_t *info)
     bios32_install();
     page_install();
     acpi_install();
-    task_install();
-    screen_install();
     vbe_install();
+    task_install();
+    //screen_install();
     extern uint32_t VIDEO_MEMORY;
     extern uint16_t vga_width, vga_height;
     if (screen_get_info())
@@ -70,4 +84,5 @@ void kernel(multiboot_info_t *info)
         vga_height = screen_get_info()->current_video_mode->theight;
     }
     clear_screen();
+    task_add(task_create("LOOP", loop, NULL));
 }

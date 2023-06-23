@@ -111,7 +111,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
     size += sizeof(uint64_t);
     if (heap->end - heap->start < heap_get_used_size(heap) + sizeof(heap_node_t) + size)
     {
-        heap_expand(heap, (heap->end - heap->start) + (sizeof(heap_node_t) + size));
+        heap_expand(heap, heap_get_used_size(heap) + sizeof(heap_node_t) + size);
         if (heap->end - heap->start < heap_get_used_size(heap) + sizeof(heap_node_t) + size)
             return (void *)NULL;
     }
@@ -150,7 +150,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
         else
             address = (uint64_t)heap_node + sizeof(heap_node_t) + sizeof(uint64_t);
         (*(uint64_t *)(address - sizeof(uint64_t))) = (uint64_t)heap_node;
-        return (void *)(address);
+        return (void *)address;
     }
     return (void *)NULL;
 }
