@@ -55,10 +55,10 @@ int32_t acpi_get_irq(uint8_t irq)
     uint32_t end = (uint32_t)madt + madt->header.Length;
     while (start < end)
     {
-        acpi_madt_entry_t *header = start;
+        acpi_madt_entry_t *header = (acpi_madt_entry_t *)start;
         if (header->type == 2)
         {
-            acpi_apic_interrupt_override_t *s = start;
+            acpi_apic_interrupt_override_t *s = (acpi_apic_interrupt_override_t *)start;
             if (s->source == irq)
                 return s->interrupt;
         }
@@ -73,10 +73,10 @@ uint8_t acpi_detect_cpu()
     uint32_t end = (uint32_t)madt + madt->header.Length;
     while (start < end)
     {
-        acpi_madt_entry_t *header = start;
+        acpi_madt_entry_t *header = (acpi_madt_entry_t *)start;
         if (header->type == 0)
         {
-            acpi_lapic_t *s = start;
+            acpi_lapic_t *s = (acpi_lapic_t *)start;
             acpi_cpu_id[acpi_cpu_cores] = s->apicId;
             acpi_cpu_cores++;
         }
@@ -90,10 +90,10 @@ int32_t acpi_get_irq_src(uint8_t irq)
     uint32_t end = (uint32_t)madt + madt->header.Length;
     while (start < end)
     {
-        acpi_madt_entry_t *header = start;
+        acpi_madt_entry_t *header = (acpi_madt_entry_t *)start;
         if (header->type == 2)
         {
-            acpi_apic_interrupt_override_t *s = start;
+            acpi_apic_interrupt_override_t *s = (acpi_apic_interrupt_override_t *)start;
             if (s->source == irq)
                 return s->source;
         }
@@ -106,47 +106,46 @@ void acpi_install()
 {
     acpi_rsdp_descriptor_t *rsdp;
     acpi_sdt_header_t *sdt;
-    acpi_allocate_region(0, 0xfffff);
     for (uint32_t ptr = 0xe0000; ptr < 0xfffff; ptr += 16)
     {
-        if (!strncmp((char *)ptr, "RSD PTR ", 8))
+        if (!strncmp((int8_t *)ptr, "RSD PTR ", 8))
         {
             rsdp = (acpi_rsdp_descriptor_t *)ptr;
             rsdt = (acpi_rsdt_t *)rsdp->RsdtAddress;
-            acpi_allocate_region(rsdp->RsdtAddress, 0x1000);
-            acpi_allocate_region(rsdp->RsdtAddress, rsdt->header.Length);
+            acpi_allocate_region((void *)rsdp->RsdtAddress, (void *)0x1000);
+            acpi_allocate_region((void *)rsdp->RsdtAddress, (void *)rsdt->header.Length);
             uint32_t i_max = (rsdt->header.Length - sizeof(acpi_sdt_header_t)) / 4;
             for (uint32_t i = 0; i < i_max; i++)
             {
-                sdt = rsdt->PointerToOtherSDT[i];
-                acpi_allocate_region(sdt, 0x1000);
-                acpi_allocate_region(sdt, sdt->Length);
+                sdt = (acpi_sdt_header_t *)rsdt->PointerToOtherSDT[i];
+                acpi_allocate_region((void *)sdt, (void *)0x1000);
+                acpi_allocate_region((void *)sdt, (void *)sdt->Length);
                 if (!strncmp(sdt->Signature, "SSDT", 4))
                 {
-                    ssdt = sdt;
+                    ssdt = (acpi_sdt_header_t *)sdt;
                 }
                 if (!strncmp(sdt->Signature, "FACP", 4))
                 {
-                    facp = sdt;
-                    dsdt = facp->Dsdt;
-                    acpi_allocate_region(facp->Dsdt, 0x1000);
-                    acpi_allocate_region(facp->Dsdt, dsdt->Length);
+                    facp = (acpi_fadt_t *)sdt;
+                    dsdt = (acpi_sdt_header_t *)facp->Dsdt;
+                    acpi_allocate_region((void *)facp->Dsdt, (void *)0x1000);
+                    acpi_allocate_region((void *)facp->Dsdt, (void *)dsdt->Length);
                     if (strncmp(dsdt->Signature, "DSDT", 4))
                         dsdt = NULL;
                 }
                 if (!strncmp(sdt->Signature, "APIC", 4))
                 {
-                    madt = sdt;
+                    madt = (acpi_madt_t *)sdt;
                     lapic_addr = madt->localApicAddr;
                     uint32_t start = (uint32_t)madt + sizeof(acpi_madt_t);
                     uint32_t end = (uint32_t)madt + madt->header.Length;
-                    acpi_allocate_region(start, end - start);
+                    acpi_allocate_region((void *)start, (void *)(end - start));
                     while (start < end)
                     {
-                        acpi_madt_entry_t *header = start;
+                        acpi_madt_entry_t *header = (acpi_madt_entry_t *)start;
                         if (header->type == 1)
                         {
-                            acpi_ioapic_t *s = header;
+                            acpi_ioapic_t *s = (acpi_ioapic_t *)header;
                             ioapic_addr = s->ioApicAddress;
                         }
                         start += header->length;

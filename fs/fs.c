@@ -48,7 +48,7 @@ fs_node_t *finddir_fs(fs_node_t *node, char *name)
 
 void fs_install()
 {
-    fs_root = kmalloc(sizeof(fs_node_t));
+    fs_root = (fs_node_t *)kmalloc(sizeof(fs_node_t));
     memset(fs_root, 0, sizeof(fs_node_t));
     strcpy(fs_root->name, "/");
     fs_root->mask = fs_root->uid = fs_root->gid = fs_root->inode = fs_root->length = 0;

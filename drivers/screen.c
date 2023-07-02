@@ -44,8 +44,9 @@ void screen_add(screen_info_t *screen)
     screen_info_t *tmp_screen = start_screen;
     while (tmp_screen->next)
         tmp_screen = tmp_screen->next;
+    screen->next = NULL;
+    screen->prev = tmp_screen;
     tmp_screen->next = screen;
-    tmp_screen->next->prev = tmp_screen;
 }
 
 void screen_service()

@@ -2,11 +2,11 @@ C_SOURCES := $(wildcard *.c)\
 			 $(wildcard drivers/*.c)\
 			 $(wildcard lib/*.c)\
 			 $(wildcard fs/*.c)
-GCC_FLAGS := -fno-stack-protector\
-			 -I include\
-			 -g\
-			 -w\
-			 -c
+CC := clang
+CC_FLAGS := -fno-stack-protector\
+			-I include\
+			-w\
+			-c
 LD_SOURCES := *.lib *.asm_o *.o
 QEMU_FLAGS := -machine pc\
 			  -vga cirrus\
@@ -22,7 +22,7 @@ i386-build:
 	@nasm -felf32 arch/i386/interrupts.asm -o interrupts.asm_o
 	@nasm -felf32 arch/i386/temp_directory.asm -o temp_directory.asm_o
 	@nasm -felf32 arch/header.asm -o header.asm_o
-	@gcc $(GCC_FLAGS) -m32 $(C_SOURCES)
+	@$(CC) $(CC_FLAGS) -m32 $(C_SOURCES)
 	@ld -melf_i386 -Tlinker.ld --allow-multiple-definition $(LD_SOURCES) -o kernel-i386.bin
 	@rm -rf *.o *.asm_o
 

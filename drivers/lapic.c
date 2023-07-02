@@ -63,12 +63,12 @@ uint32_t lapic_addr;
 
 static uint32_t lapic_read(uint32_t reg)
 {
-	return mm_inl(lapic_addr + reg);
+	return mm_inl((void*)(lapic_addr + reg));
 }
 
 static void lapic_write(uint32_t reg, uint32_t data)
 {
-	mm_outl(lapic_addr + reg, data);
+	mm_outl((void*)(lapic_addr + reg), data);
 }
 
 uint32_t lapic_id()

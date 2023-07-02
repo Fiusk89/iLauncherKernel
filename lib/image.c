@@ -14,7 +14,7 @@ void *tga_parse(char *filename)
     uint32_t m = ((ptr[1] ? (ptr[7] >> 3) * ptr[5] : 0) + 18);
     if (w < 1 || h < 1)
         return NULL;
-    uint32_t *data = kmalloc(sizeof(uint32_t) * (w * h + 2));
+    uint32_t *data = (uint32_t *)kmalloc(sizeof(uint32_t) * (w * h + 2));
     if (!data)
         return NULL;
     memset(data, 0x00000000, sizeof(uint32_t) * (w * h + 2));

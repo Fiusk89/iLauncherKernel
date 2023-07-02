@@ -4,17 +4,16 @@ static void print(const char *data, uint32_t data_length)
 {
 	for (uint32_t i = 0; i < data_length; i++)
 	{
+		uint8_t tab_length = 4;
 		uint8_t value = *data++;
 		switch (value)
 		{
 		case '\t':
-			uint8_t tab_length = 4;
 		loop:
-			if (tab_length == 0)
-				break;
 			dos_print_char(' ', 0x0f, 0);
 			tab_length--;
-			goto loop;
+			if (tab_length > 0)
+				goto loop;
 			break;
 		default:
 			dos_print_char(value, 0x0f, 0);

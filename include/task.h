@@ -56,8 +56,6 @@ extern task_t *current_task;
 
 bool task_node_add(task_t *task);
 bool task_node_remove(uint32_t pid);
-void task_pause();
-void task_resume();
 void task_idle();
 task_t *task_get();
 void task_remove(task_t *task, uint8_t state, uint32_t state_info, uint32_t value);

@@ -29,7 +29,7 @@ uint32_t *pci_find_devices(uint8_t length, uint8_t class, uint8_t subclass, uint
     uint32_t devices_pos = 0;
     memset(devices, 0, 256 * sizeof(uint32_t));
     if (!devices)
-        return;
+        return (void*)NULL;
     for (uint8_t bus = 0; bus < 256; bus++)
     {
         for (uint8_t slot = 0; slot < 32; slot++)

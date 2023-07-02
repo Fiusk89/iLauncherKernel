@@ -49,15 +49,18 @@ uint8_t chr[0] = {
 void loop()
 {
     while (true)
-        if (keyboard_get_key())
+    {
+        char key = keyboard_get_key();
+        if (key == '=')
             reboot();
-        else
-            kprintf(chr), chr[0]++;
+        if (key)
+            dos_print_char(key, 0x0f, 0x00);
+    }
 }
 
 void kernel(multiboot_info_t *info)
 {
-    multiboot_module_t *mods = KERNEL_P2V(info->mods_addr);
+    multiboot_module_t *mods = (multiboot_module_t *)KERNEL_P2V(info->mods_addr);
     gdt_install();
     idt_install();
     isr_install();
@@ -72,9 +75,10 @@ void kernel(multiboot_info_t *info)
     bios32_install();
     page_install();
     acpi_install();
-    vbe_install();
     task_install();
-    //screen_install();
+    screen_install();
+    task_add(task_create("loop", loop, NULL));
+    //vbe_install();
     extern uint32_t VIDEO_MEMORY;
     extern uint16_t vga_width, vga_height;
     if (screen_get_info())
@@ -84,5 +88,4 @@ void kernel(multiboot_info_t *info)
         vga_height = screen_get_info()->current_video_mode->theight;
     }
     clear_screen();
-    task_add(task_create("LOOP", loop, NULL));
 }

@@ -9,13 +9,6 @@
 #define FS_SYMLINK 0x06
 #define FS_MOUNTPOINT 0x08
 
-typedef uint32_t (*read_type_t)(struct fs_node *, uint32_t, uint32_t, uint8_t *);
-typedef uint32_t (*write_type_t)(struct fs_node *, uint32_t, uint32_t, uint8_t *);
-typedef void (*open_type_t)(struct fs_node *);
-typedef void (*close_type_t)(struct fs_node *);
-typedef struct dirent *(*readdir_type_t)(struct fs_node *, uint32_t);
-typedef struct fs_node *(*finddir_type_t)(struct fs_node *, char *name);
-
 typedef struct fs_node
 {
     char name[128];
@@ -26,12 +19,12 @@ typedef struct fs_node
     uint32_t inode;
     uint32_t length;
     uint32_t impl;
-    read_type_t read;
-    write_type_t write;
-    open_type_t open;
-    close_type_t close;
-    readdir_type_t readdir;
-    finddir_type_t finddir;
+    uint32_t (*read)(struct fs_node *, uint32_t, uint32_t, uint8_t *);
+    uint32_t (*write)(struct fs_node *, uint32_t, uint32_t, uint8_t *);
+    void (*open)(struct fs_node *);
+    void (*close)(struct fs_node *);
+    struct dirent *(*readdir)(struct fs_node *, uint32_t);
+    struct fs_node *(*finddir)(struct fs_node *, char *name);
     struct fs_node *ptr;
 } fs_node_t;
 

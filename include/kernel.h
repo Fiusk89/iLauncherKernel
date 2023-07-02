@@ -21,7 +21,6 @@
 #include <isr.h>
 #include <irq.h>
 #include <syscall.h>
-#include <canvas.h>
 #include <cpuid.h>
 #include <cpu.h>
 #include <apic.h>
@@ -49,7 +48,6 @@
 #include <pci.h>
 #include <image.h>
 #include <ide.h>
-#include <window.h>
 
 #define KB 1024
 #define MB (1024 * 1024)

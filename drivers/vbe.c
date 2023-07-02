@@ -1,7 +1,7 @@
 #include <vbe.h>
 
-vbe_info_t *vbe_info = 0x9500;
-vbe_mode_info_t *vbe_mode_info = 0x9000;
+vbe_info_t *vbe_info = (vbe_info_t *)0x9500;
+vbe_mode_info_t *vbe_mode_info = (vbe_mode_info_t *)0x9000;
 screen_info_t *vbe_modes;
 uint64_t *vbe_memory = 0;
 uint16_t vbe_current_mode;
@@ -52,17 +52,17 @@ void vbe_set_mode(uint16_t mode)
     }
     kfree(vbe_modes->text_framebuffer);
     kfree(vbe_modes->graphic_framebuffer);
-    vbe_modes->text_framebuffer = kmalloc((vbe_mode_info->width / 8) *
-                                          (vbe_mode_info->height / 16) *
-                                          sizeof(uint16_t));
-    vbe_modes->graphic_framebuffer = kmalloc(vbe_mode_info->width *
-                                             vbe_mode_info->height *
-                                             round((float)vbe_mode_info->bpp / 8.0));
+    vbe_modes->text_framebuffer = (uint16_t *)kmalloc((vbe_mode_info->width / 8) *
+                                                      (vbe_mode_info->height / 16) *
+                                                      sizeof(uint16_t));
+    vbe_modes->graphic_framebuffer = (void *)kmalloc(vbe_mode_info->width *
+                                                     vbe_mode_info->height *
+                                                     round((float)vbe_mode_info->bpp / 8.0));
 }
 
 void *vbe_mode_list()
 {
-    screen_info_t *vesa = kmalloc(sizeof(screen_info_t));
+    screen_info_t *vesa = (screen_info_t *)kmalloc(sizeof(screen_info_t));
     memset(vesa, 0, sizeof(screen_info_t));
     uint16_t index = 0;
     vbe_mode_info_t *mode_info = vbe_mode_info;
@@ -76,7 +76,7 @@ void *vbe_mode_list()
             continue;
         index++;
     }
-    vesa->video_modes = kmalloc(sizeof(screen_mode_info_t) * (index - 1));
+    vesa->video_modes = (screen_mode_info_t *)kmalloc(sizeof(screen_mode_info_t) * (index - 1));
     memset(vesa->video_modes, 0, sizeof(screen_mode_info_t) * (index - 1));
     vesa->video_modes_length = index - 1;
     index = 0;

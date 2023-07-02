@@ -14,8 +14,9 @@ void pc_speaker_disable()
 
 void pc_speaker_service()
 {
+    uint8_t value;
 loop:
-    uint8_t value = ((pc_speaker_value * 54) / 255);
+    value = ((pc_speaker_value * 54) / 255);
     if (!value)
         pc_speaker_disable();
     else

@@ -79,26 +79,31 @@ void page_install()
     };
 
     page_frames_size = (uint32_t)-1 >> 12;
-    page_frames = kmalloc(BIT_INDEX(page_frames_size) * sizeof(uint64_t));
+    page_frames = (uint64_t *)kmalloc(BIT_INDEX(page_frames_size) * sizeof(uint64_t));
     memset(page_frames, 0, BIT_INDEX(page_frames_size) * sizeof(uint64_t));
-    kernel_directory = kmalloc_a(sizeof(page_directory_t), 0x1000);
+    kernel_directory = (page_t *)kmalloc_a(sizeof(page_directory_t), 0x1000);
     memset(kernel_directory, 0, sizeof(page_directory_t));
     kernel_directory->physicalAddr = KERNEL_V2P((uint32_t)&kernel_directory->tablesPhysical);
     current_directory = kernel_directory;
+
+    for (uint32_t i = 0; i < 0x100000; i += 0x1000)
+    {
+        page_alloc_frame(kernel_directory, i, i, 0, 0);
+    }
 
     for (uint32_t i = 0; i < KERNEL_V2P(placement_address); i += 0x1000)
     {
         page_alloc_frame(kernel_directory, KERNEL_P2V(i), i, 0, 0);
     }
 
-    for (uint32_t i = placement_address; i < placement_address + 0x100000; i += 0x1000)
+    for (uint32_t i = placement_address; i < placement_address + 16 * KB; i += 0x1000)
     {
         page_alloc_frame(kernel_directory, i, 0, 0, 0);
     }
 
     switch_page_directory(kernel_directory);
-    enable_page();
-    kheap = heap_create(placement_address, placement_address + 0x100000, 0xffffffff, 0, 0);
+    page_enable();
+    kheap = heap_create(placement_address, placement_address + 16 * KB, 0xffffffff, 0, 0);
 }
 
 void switch_page_directory(page_directory_t *dir)
@@ -107,7 +112,7 @@ void switch_page_directory(page_directory_t *dir)
     asm volatile("mov %0, %%cr3" ::"r"(dir->physicalAddr));
 }
 
-void enable_page()
+void page_enable()
 {
     uint32_t cr0, cr4;
     asm volatile("mov %%cr4, %0"

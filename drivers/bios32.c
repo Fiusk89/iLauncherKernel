@@ -17,7 +17,7 @@ void bios32_install()
 void bios32_service(uint8_t int_num, register16_t *in_reg, register16_t *out_reg)
 {
     asm volatile("cli");
-    void *new_code_base = 0x7c00;
+    void *new_code_base = (void *)0x7c00;
     memcpy(&asm_gdt_entries, gdt, sizeof(gdt));
     real_gdt_ptr.base = (uint32_t)REBASE((&asm_gdt_entries));
     memcpy(&asm_gdt_ptr, &real_gdt_ptr, sizeof(real_gdt_ptr));

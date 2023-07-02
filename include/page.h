@@ -34,6 +34,7 @@ typedef struct page_directory
 
 extern page_directory_t *kernel_directory;
 
+void page_enable();
 void page_install();
 void switch_page_directory(page_directory_t *new);
 page_directory_t *clone_directory(page_directory_t *src);
@@ -41,5 +42,4 @@ page_t *get_page(uint32_t address, bool make, page_directory_t *dir);
 void page_alloc_frame(page_directory_t *page_directory, uint32_t v_address, uint32_t p_address, bool is_kernel, bool is_writeable);
 void page_free_frame(page_directory_t *page_directory, uint32_t v_address);
 void switch_page_directory(page_directory_t *dir);
-void page_enable();
 #endif

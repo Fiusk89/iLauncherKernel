@@ -32,7 +32,7 @@ void set_cursor_pos(uint16_t x, uint16_t y)
 
 void clear_screen()
 {
-    uint16_t *screen = VIDEO_MEMORY;
+    uint16_t *screen = (uint16_t *)VIDEO_MEMORY;
     for (uint32_t i = 0; i < vga_width * vga_height; i++)
         *screen++ = (((vga_cursor_color & 0x0f) << 8) | (' ' & 0xff));
     set_cursor_pos(0, 0);
@@ -40,11 +40,28 @@ void clear_screen()
 
 void scroll()
 {
-    uint16_t *screen = VIDEO_MEMORY;
+    uint16_t *screen = (uint16_t *)VIDEO_MEMORY;
     for (uint32_t i = 0; i < vga_width * (vga_height - 1); i++)
         screen[i] = screen[i + vga_width];
     for (uint32_t i = vga_width * (vga_height - 1); i < vga_width * vga_height; i++)
         screen[i] = (((vga_cursor_color & 0x0f) << 8) | (' ' & 0xff));
+}
+
+void remove_last_char()
+{
+    uint16_t y = screen_cursor_position / vga_width;
+    uint16_t x = screen_cursor_position % vga_width;
+    if (x == 0 && y > 0)
+    {
+        x = vga_width - 1, y--;
+    }
+    else if (x > 0)
+    {
+        x--;
+    }
+    set_cursor_pos(x, y);
+    uint16_t *screen = (uint16_t *)(VIDEO_MEMORY + (screen_cursor_position * sizeof(uint16_t)));
+    *screen = (((vga_cursor_color & 0x0f) << 8) | (' ' & 0xff));
 }
 
 void move_next_cursor()
@@ -69,12 +86,16 @@ void move_next_cursor()
 void dos_print_char(char c, char colors, char toblink)
 {
     uint32_t curpos = screen_cursor_position * sizeof(uint16_t);
-    uint8_t *screen = (char *)curpos + VIDEO_MEMORY;
-    if (c == '\n')
+    uint8_t *screen = (uint8_t *)curpos + VIDEO_MEMORY;
+    switch (c)
     {
+    case '\n':
         next_line();
         curpos = screen_cursor_position * sizeof(uint16_t);
-        screen = (char *)curpos + VIDEO_MEMORY;
+        screen = (uint8_t *)curpos + VIDEO_MEMORY;
+        return;
+    case '\b':
+        remove_last_char();
         return;
     }
     *screen = c;

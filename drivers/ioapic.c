@@ -43,14 +43,14 @@ uint32_t ioapic_addr;
 
 static uint32_t ioapic_read(uint32_t base, uint8_t reg)
 {
-    mm_outl(base + IOAPIC_REGSEL, reg);
-    return mm_inl(base + IOAPIC_REGWIN);
+    mm_outl((void *)(base + IOAPIC_REGSEL), reg);
+    return mm_inl((void *)(base + IOAPIC_REGWIN));
 }
 
 static void ioapic_write(uint32_t base, uint8_t reg, uint32_t val)
 {
-    mm_outl(base + IOAPIC_REGSEL, reg);
-    mm_outl(base + IOAPIC_REGWIN, val);
+    mm_outl((void *)(base + IOAPIC_REGSEL), reg);
+    mm_outl((void *)(base + IOAPIC_REGWIN), val);
 }
 
 void ioapic_set_entry(uint32_t base, uint8_t index, uint64_t data)

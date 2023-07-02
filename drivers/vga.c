@@ -60,7 +60,7 @@ void vga_set_palette(uint32_t *palette)
 void vga_copy2framebuffer(uint8_t *vga_buffer, uint8_t p)
 {
     uint8_t plane = (1 << p);
-    uint8_t *vga_memory = 0xA0000;
+    uint8_t *vga_memory = (uint8_t *)0xA0000;
     outb(VGA_SEQ_INDEX, 0x02);
     outb(VGA_SEQ_DATA, plane);
     for (uint16_t i = 0; i < 38400; i++)

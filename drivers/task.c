@@ -7,18 +7,20 @@ extern uint32_t get_eip();
 extern void switch_context(void *old, void *new);
 extern uint32_t *page_frames, page_frames_size;
 
+uint8_t task_pause = false;
 task_t *start_task, *current_task;
 register_t saved_context;
 static uint32_t next_pid = 0;
 
 static uint32_t task_pid()
 {
-    next_pid = (next_pid % 0xffffffff) + 1;
-    return next_pid;
+    return next_pid++;
 }
 
 void task_free(task_t *task)
 {
+    kfree(task->context.page);
+    kfree(task->context.heap);
     kfree(task->context.stack);
     kfree(task);
 }
@@ -28,11 +30,11 @@ bool task_node_add(task_t *task)
     if (!start_task || !task)
         return true;
     task_t *tmp_task = start_task;
-    task->next = NULL;
     while (tmp_task->next)
         tmp_task = tmp_task->next;
+    task->next = (task_t *)NULL;
+    task->prev = tmp_task;
     tmp_task->next = task;
-    tmp_task->next->prev = tmp_task;
     return false;
 }
 
@@ -65,22 +67,25 @@ void task_remove(task_t *task, uint8_t state, uint32_t state_info, uint32_t valu
 {
     if (!task || !task->pid)
         return;
+    task_pause = true;
     task->state = state;
     task->state_info = state_info;
     task->value = value;
     task_node_remove(task->pid);
-    kfree(task);
+    if (current_task != task)
+        task_free(task);
+    task_pause = false;
 }
 
 static void task_helper()
 {
     task_function_t function = (task_function_t)current_task->eip;
-    uint64_t *flags = current_task->flags;
+    uint64_t *flags = (uint64_t *)current_task->flags;
     uint64_t value = 0;
     if (!flags)
         value = function(NULL, NULL);
     else
-        value = function(flags[0], flags[1]);
+        value = function((int32_t)flags[0], (int8_t **)flags[1]);
     task_remove(current_task, TASK_TERMINATED, NULL, value);
     schedule();
 }
@@ -89,7 +94,7 @@ task_t *task_create(uint8_t *name, void *function, void *flags)
 {
     if (!function || !name)
         return NULL;
-    task_t *task = kmalloc(sizeof(task_t));
+    task_t *task = (task_t *)kmalloc(sizeof(task_t));
     memset(task, 0, sizeof(task_t));
     uint32_t name_length = strlen(name);
     if (name_length > 256 - 1)
@@ -101,7 +106,7 @@ task_t *task_create(uint8_t *name, void *function, void *flags)
     memset(task->context.stack, 0, TASK_STACK_SIZE);
     task_register_t *context = (task_register_t *)task->context.stack;
     context->eip = (uint64_t)isr_exit;
-    register_t *regs = (task_register_t *)((uint64_t)task->context.stack + sizeof(task_register_t));
+    register_t *regs = (register_t *)((uint64_t)task->context.stack + sizeof(task_register_t));
     regs->eflags = 0x206;
     regs->cs = 0x08;
     regs->gs = regs->fs = regs->es = regs->ds = 0x10;
@@ -115,7 +120,9 @@ bool task_add(task_t *task)
 {
     if (!task)
         return false;
+    task_pause = true;
     task_node_add(task);
+    task_pause = false;
     return true;
 }
 
@@ -135,6 +142,8 @@ void task_fault(register_t *regs)
 
 void schedule()
 {
+    if (task_pause)
+        return;
     if (!start_task)
         return;
     if (!current_task)
@@ -151,7 +160,7 @@ void schedule()
 
 void task_install()
 {
-    current_task = kmalloc(sizeof(task_t));
+    current_task = (task_t *)kmalloc(sizeof(task_t));
     memset(current_task, 0, sizeof(task_t));
     strcpy(current_task->name, "iLauncherKernel");
     int8_t exceptions[] = {
