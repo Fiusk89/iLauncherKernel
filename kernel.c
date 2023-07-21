@@ -48,9 +48,10 @@ uint8_t chr[0] = {
 
 void loop()
 {
+    char key = NULL;
     while (true)
     {
-        char key = keyboard_get_key();
+        key = keyboard_get_key();
         if (key == '=')
             reboot();
         if (key)
@@ -75,10 +76,9 @@ void kernel(multiboot_info_t *info)
     bios32_install();
     page_install();
     acpi_install();
+    // vbe_install();
     task_install();
     screen_install();
-    task_add(task_create("loop", loop, NULL));
-    //vbe_install();
     extern uint32_t VIDEO_MEMORY;
     extern uint16_t vga_width, vga_height;
     if (screen_get_info())
@@ -88,4 +88,5 @@ void kernel(multiboot_info_t *info)
         vga_height = screen_get_info()->current_video_mode->theight;
     }
     clear_screen();
+    task_add(task_create("loop", loop, NULL));
 }

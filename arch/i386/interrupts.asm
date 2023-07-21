@@ -10,7 +10,6 @@ isr_exit:
     pop ds
     popa
     add esp, 8
-    sti
     iret
 
 %macro ISR_NOERRCODE 1

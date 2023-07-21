@@ -67,19 +67,9 @@ void *vbe_mode_list()
     uint16_t index = 0;
     vbe_mode_info_t *mode_info = vbe_mode_info;
     uint16_t *mode_list = (uint16_t *)vbe_info->video_modes;
-    for (uint32_t i = 0; mode_list[i] != 0xffff; i++)
-    {
-        vbe_get_mode(mode_list[i]);
-        if ((mode_info->attributes & 0x90) != 0x90)
-            continue;
-        if (mode_info->memory_model != 4 && mode_info->memory_model != 6)
-            continue;
-        index++;
-    }
-    vesa->video_modes = (screen_mode_info_t *)kmalloc(sizeof(screen_mode_info_t) * (index - 1));
-    memset(vesa->video_modes, 0, sizeof(screen_mode_info_t) * (index - 1));
-    vesa->video_modes_length = index - 1;
-    index = 0;
+    vesa->video_modes = (screen_mode_info_t *)kmalloc(sizeof(screen_mode_info_t));
+    memset(vesa->video_modes, 0, sizeof(screen_mode_info_t));
+    screen_mode_info_t *tmp = vesa->video_modes;
     for (uint16_t i = 0; mode_list[i] != 0xffff; i++)
     {
         vbe_get_mode(mode_list[i]);
@@ -87,17 +77,20 @@ void *vbe_mode_list()
             continue;
         if (mode_info->memory_model != 4 && mode_info->memory_model != 6)
             continue;
-        vesa->video_modes[index].flags = (1 << 1);
-        vesa->video_modes[index].framebuffer = mode_info->framebuffer;
-        vesa->video_modes[index].mode = mode_list[i];
-        vesa->video_modes[index].width = mode_info->width;
-        vesa->video_modes[index].height = mode_info->height;
-        vesa->video_modes[index].pitch = mode_info->pitch;
-        vesa->video_modes[index].twidth = mode_info->width / 8;
-        vesa->video_modes[index].theight = mode_info->height / 16;
-        vesa->video_modes[index].tpitch = sizeof(uint16_t) * (mode_info->width / 8);
-        vesa->video_modes[index].bpp = mode_info->bpp;
-        index++;
+        tmp->flags = (1 << 1);
+        tmp->framebuffer = mode_info->framebuffer;
+        tmp->mode = mode_list[i];
+        tmp->width = mode_info->width;
+        tmp->height = mode_info->height;
+        tmp->pitch = mode_info->pitch;
+        tmp->twidth = mode_info->width / 8;
+        tmp->theight = mode_info->height / 16;
+        tmp->tpitch = sizeof(uint16_t) * (mode_info->width / 8);
+        tmp->bpp = mode_info->bpp;
+        tmp->next = (screen_mode_info_t *)kmalloc(sizeof(screen_mode_info_t));
+        memset(tmp->next, 0, sizeof(screen_mode_info_t));
+        tmp->next->prev = tmp;
+        tmp = tmp->next;
     }
     return vesa;
 }
@@ -116,14 +109,12 @@ void vbe_install()
     vbe_modes = vbe_mode_list();
     uint32_t mode_length = vbe_modes->video_modes_length;
     uint32_t mode_xy = 0;
-    for (uint32_t i = 0; i < mode_length; i++)
+    screen_mode_info_t *tmp = vbe_modes->video_modes;
+    while (tmp->next)
     {
-        if (vbe_modes->video_modes[i].width * vbe_modes->video_modes[i].height > mode_xy &&
-            vbe_modes->video_modes[i].bpp >= 24)
-        {
-            vbe_modes->current_video_mode = &vbe_modes->video_modes[i];
-            mode_xy = vbe_modes->video_modes[i].width * vbe_modes->video_modes[i].height;
-        }
+        if (tmp->height * tmp->pitch >= mode_xy && tmp->bpp >= 24)
+            vbe_modes->current_video_mode = tmp, mode_xy = tmp->height * tmp->pitch;
+        tmp = tmp->next;
     }
     vbe_set_mode(vbe_modes->current_video_mode->mode);
     screen_add(vbe_modes);

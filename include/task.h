@@ -34,6 +34,7 @@ typedef struct task_register
 
 typedef struct task
 {
+    uint8_t ready;
     uint8_t name[256];
     uint8_t state;
     uint32_t state_info;

@@ -34,6 +34,8 @@ typedef struct screen_mode_info
     uint16_t height, theight;
     uint16_t pitch, tpitch;
     uint8_t bpp;
+    struct screen_mode_info *prev;
+    struct screen_mode_info *next;
 } screen_mode_info_t;
 
 typedef struct screen_info

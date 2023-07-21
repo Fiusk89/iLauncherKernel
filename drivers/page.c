@@ -96,14 +96,14 @@ void page_install()
         page_alloc_frame(kernel_directory, KERNEL_P2V(i), i, 0, 0);
     }
 
-    for (uint32_t i = placement_address; i < placement_address + 16 * KB; i += 0x1000)
+    for (uint32_t i = placement_address; i < placement_address + 0x1000; i += 0x1000)
     {
-        page_alloc_frame(kernel_directory, i, 0, 0, 0);
+        page_alloc_frame(kernel_directory, i, KERNEL_V2P(i), 0, 0);
     }
 
     switch_page_directory(kernel_directory);
     page_enable();
-    kheap = heap_create(placement_address, placement_address + 16 * KB, 0xffffffff, 0, 0);
+    kheap = heap_create(placement_address, placement_address + 0x1000, 0xffffffff, 0, 0);
 }
 
 void switch_page_directory(page_directory_t *dir)

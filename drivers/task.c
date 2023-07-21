@@ -7,7 +7,7 @@ extern uint32_t get_eip();
 extern void switch_context(void *old, void *new);
 extern uint32_t *page_frames, page_frames_size;
 
-uint8_t task_pause = false;
+uint32_t task_pause = false;
 task_t *start_task, *current_task;
 register_t saved_context;
 static uint32_t next_pid = 0;
@@ -34,6 +34,7 @@ bool task_node_add(task_t *task)
         tmp_task = tmp_task->next;
     task->next = (task_t *)NULL;
     task->prev = tmp_task;
+    tmp_task->ready = false;
     tmp_task->next = task;
     return false;
 }
@@ -67,14 +68,15 @@ void task_remove(task_t *task, uint8_t state, uint32_t state_info, uint32_t valu
 {
     if (!task || !task->pid)
         return;
-    task_pause = true;
+    task_t *node_prev = task->prev;
+    node_prev->ready = false;
     task->state = state;
     task->state_info = state_info;
     task->value = value;
     task_node_remove(task->pid);
     if (current_task != task)
         task_free(task);
-    task_pause = false;
+    node_prev->ready = true;
 }
 
 static void task_helper()
@@ -120,9 +122,8 @@ bool task_add(task_t *task)
 {
     if (!task)
         return false;
-    task_pause = true;
     task_node_add(task);
-    task_pause = false;
+    task->prev->ready = true;
     return true;
 }
 
@@ -142,16 +143,22 @@ void task_fault(register_t *regs)
 
 void schedule()
 {
-    if (task_pause)
-        return;
-    if (!start_task)
-        return;
     if (!current_task)
+    {
         current_task = start_task;
+        return;
+    }
     task_t *old_task = current_task;
-    current_task = current_task->next;
-    if (current_task->state == TASK_PAUSED)
+    if (current_task->ready)
+    {
         current_task = current_task->next;
+        if (current_task->state == TASK_PAUSED)
+            current_task = current_task->next;
+    }
+    else
+    {
+        current_task = start_task;
+    }
     if (!current_task)
         current_task = start_task;
     current_task->state = TASK_RUNNING;
@@ -162,6 +169,7 @@ void task_install()
 {
     current_task = (task_t *)kmalloc(sizeof(task_t));
     memset(current_task, 0, sizeof(task_t));
+    current_task->ready = true;
     strcpy(current_task->name, "iLauncherKernel");
     int8_t exceptions[] = {
         0,

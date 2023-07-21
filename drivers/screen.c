@@ -56,6 +56,10 @@ void screen_service()
     {
         if (screen_is_empty || !start_screen || !current_screen)
             continue;
+        memset((void *)current_screen->current_video_mode->framebuffer,
+               0xff,
+               current_screen->current_video_mode->pitch * current_screen->current_video_mode->height);
+        continue;
         if (current_screen->current_video_mode->flags & (1 << 1))
         {
             uint8_t bpp[2] = {
