@@ -167,7 +167,7 @@ void schedule()
 
 void task_install()
 {
-    current_task = (task_t *)kmalloc(sizeof(task_t));
+    start_task = current_task = (task_t *)kmalloc(sizeof(task_t));
     memset(current_task, 0, sizeof(task_t));
     current_task->ready = true;
     strcpy(current_task->name, "iLauncherKernel");
@@ -185,5 +185,4 @@ void task_install()
     };
     for (uint8_t i = 0; exceptions[i] != -1; i++)
         isr_add_handler(exceptions[i] ? (uint8_t)exceptions[i] : 0, task_fault);
-    start_task = current_task;
 }

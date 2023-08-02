@@ -45,11 +45,6 @@ void vbe_set_mode(uint16_t mode)
     bios32_service(BIOS_GRAPHICS_SERVICE, &reg_in, &reg_out);
     vbe_current_mode = mode;
     vbe_get_mode(mode);
-    uint32_t fbSize = vbe_mode_info->width * vbe_mode_info->height * round((float)vbe_mode_info->bpp / 8.0);
-    for (uint32_t i = vbe_mode_info->framebuffer; i < vbe_mode_info->framebuffer + fbSize; i += 0x1000)
-    {
-        page_alloc_frame(kernel_directory, i, i, 1, 1);
-    }
     kfree(vbe_modes->text_framebuffer);
     kfree(vbe_modes->graphic_framebuffer);
     vbe_modes->text_framebuffer = (uint16_t *)kmalloc((vbe_mode_info->width / 8) *
@@ -95,8 +90,35 @@ void *vbe_mode_list()
     return vesa;
 }
 
+void vbe_map_memory()
+{
+    memcpy((void *)0x9500, "VBE2", 4);
+    register16_t reg_in = {0};
+    register16_t reg_out = {0};
+    reg_in.ax = 0x4F00;
+    reg_in.di = 0x9500;
+    bios32_service(BIOS_GRAPHICS_SERVICE, &reg_in, &reg_out);
+    vbe_mode_info_t *mode_info = vbe_mode_info;
+    uint16_t *mode_list = (uint16_t *)vbe_info->video_modes;
+    for (uint16_t i = 0; mode_list[i] != 0xffff; i++)
+    {
+        vbe_get_mode(mode_list[i]);
+        if ((mode_info->attributes & 0x90) != 0x90)
+            continue;
+        if (mode_info->memory_model != 4 && mode_info->memory_model != 6)
+            continue;
+        for (uint32_t i = mode_info->framebuffer;
+             i < mode_info->framebuffer + mode_info->pitch * mode_info->height;
+             i += 0x1000)
+        {
+            page_alloc_frame(kernel_directory, i, i, 0, 0);
+        }
+    }
+}
+
 void vbe_install()
 {
+    vbe_map_memory();
     uint32_t colors = 0;
     memcpy((void *)0x9500, "VBE2", 4);
     register16_t reg_in = {0};
