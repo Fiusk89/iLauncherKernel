@@ -48,7 +48,11 @@ uint8_t chr[0] = {
 
 void loop()
 {
+    extern heap_t *kheap;
     char key = NULL;
+    kprintf("USED MEMORY: %uMB;\nFREE MEMORY: %uMB;\n",
+            (uint32_t)heap_get_used_size(kheap) / MB,
+            (uint32_t)heap_get_free_size(kheap) / MB);
     while (true)
     {
         key = keyboard_get_key();

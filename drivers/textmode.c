@@ -94,9 +94,6 @@ void dos_print_char(char c, char colors, char toblink)
         curpos = screen_cursor_position * sizeof(uint16_t);
         screen = (uint8_t *)curpos + VIDEO_MEMORY;
         return;
-    case '\b':
-        remove_last_char();
-        return;
     }
     *screen = c;
     *(screen + 1) = c == toblink ? colors | 0x80 : colors;
