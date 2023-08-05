@@ -6,21 +6,22 @@
 
 typedef enum task_state
 {
-    TASK_RUNNING = 0,
-    TASK_SLEEPING = 1,
-    TASK_TERMINATED = 2,
-    TASK_CRASHED = 3,
-    TASK_PAUSED = 4,
-    TASK_KILLED = 5,
+    TASK_RUNNING,
+    TASK_SLEEPING,
+    TASK_TERMINATED,
+    TASK_CRASHED,
+    TASK_PAUSED,
+    TASK_KILLED,
+    TASK_EXIT
 } task_state_t;
 
 typedef enum task_priority
 {
-    TASK_PRIORITY_VERY_LOW = 4,
-    TASK_PRIORITY_LOW = 3,
-    TASK_PRIORITY_NORMAL = 2,
-    TASK_PRIORITY_HIGH = 1,
-    TASK_PRIORITY_VERY_HIGH = 0,
+    TASK_PRIORITY_VERY_LOW,
+    TASK_PRIORITY_LOW,
+    TASK_PRIORITY_NORMAL,
+    TASK_PRIORITY_HIGH,
+    TASK_PRIORITY_VERY_HIGH,
 } task_priority_t;
 
 typedef struct task_register
@@ -43,7 +44,7 @@ typedef struct task
     uint32_t active_time;
     struct task_context
     {
-        void *stack;
+        void *stack, *stack1;
         struct page_directory *page;
         struct heap *heap;
     } context;

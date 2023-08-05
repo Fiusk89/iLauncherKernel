@@ -105,6 +105,7 @@ task_t *task_create(uint8_t *name, void *function, void *flags)
         memcpy(task->name, name, name_length);
     task->pid = task_pid();
     task->context.stack = (void *)kmalloc_a(TASK_STACK_SIZE, 0x1000);
+    task->context.stack1 = task->context.stack;
     memset(task->context.stack, 0, TASK_STACK_SIZE);
     task_register_t *context = (task_register_t *)task->context.stack;
     context->eip = (uint64_t)isr_exit;

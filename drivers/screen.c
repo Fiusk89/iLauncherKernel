@@ -49,6 +49,59 @@ void screen_add(screen_info_t *screen)
     tmp_screen->next = screen;
 }
 
+void screen_drawchar(void *framebuffer, uint32_t pitch, uint8_t chr, uint8_t color, uint8_t bpp)
+{
+    if (!framebuffer)
+        return;
+    uint8_t *gylph = font + 2 + (chr * font[1]);
+    for (uint8_t y = 0; y < font[1]; y++)
+    {
+        uint32_t *framebuffer_offset32 = (uint32_t *)framebuffer;
+        uint24_t *framebuffer_offset24 = (uint24_t *)framebuffer;
+        uint16_t *framebuffer_offset16 = (uint16_t *)framebuffer;
+        for (uint8_t x = 0; x < font[0]; x++)
+        {
+            if (gylph[y] & screen_text_mask[x])
+            {
+                uint8_t tmp = color & 0x0f;
+                switch (bpp)
+                {
+                case 32:
+                    (*framebuffer_offset32++) = vga_colors[tmp];
+                    break;
+                case 24:
+                    (*framebuffer_offset24++).value = vga_colors[tmp];
+                    break;
+                case 16:
+                    (*framebuffer_offset16++) = vga_colors[tmp];
+                    break;
+                default:
+                    break;
+                }
+            }
+            else
+            {
+                uint8_t tmp = (color >> 4) & 0x0f;
+                switch (bpp)
+                {
+                case 32:
+                    (*framebuffer_offset32++) = vga_colors[tmp];
+                    break;
+                case 24:
+                    (*framebuffer_offset24++).value = vga_colors[tmp];
+                    break;
+                case 16:
+                    (*framebuffer_offset16++) = vga_colors[tmp];
+                    break;
+                default:
+                    break;
+                }
+            }
+        }
+        framebuffer += pitch;
+    }
+}
+
 void screen_service()
 {
     pit_t saved_timer;
@@ -64,52 +117,27 @@ void screen_service()
             };
             uint32_t framebuffer_size = current_screen->current_video_mode->pitch *
                                         current_screen->current_video_mode->height;
-            uint16_t width = current_screen->current_video_mode->width * bpp[1];
+            uint16_t width = current_screen->current_video_mode->pitch;
             uint16_t height = current_screen->current_video_mode->height;
             uint16_t cursor_pos[2] = {
-                (screen_cursor_position % current_screen->current_video_mode->twidth) * 8,
-                (screen_cursor_position / current_screen->current_video_mode->twidth) * 16,
+                (screen_cursor_position % current_screen->current_video_mode->twidth) * font[0],
+                (screen_cursor_position / current_screen->current_video_mode->twidth) * font[1],
+            };
+            uint8_t char_size[2] = {
+                font[0] * bpp[1],
+                font[1] * bpp[1],
             };
             uint8_t *textbuffer_offset = (uint8_t *)current_screen->text_framebuffer;
             uint8_t *textbuffer_offset2 = (uint8_t *)&current_screen->text_framebuffer[screen_cursor_position];
-            for (uint32_t ty = 0; ty < framebuffer_size; ty += current_screen->current_video_mode->pitch * 16)
+            for (uint32_t ty = 0; ty < framebuffer_size; ty += current_screen->current_video_mode->pitch * font[1])
             {
                 void *framebuffer_offset = (void *)(current_screen->current_video_mode->framebuffer + ty);
                 void *framebuffer_offset_old = framebuffer_offset;
-                for (uint32_t tx = 0; tx < width; tx += 8 * bpp[1])
+                for (uint32_t tx = 0; tx < width; tx += char_size[0])
                 {
-                    if (current_task->active_time - saved_timer >= 150)
-                        screen_cursor = screen_cursor ? false : true, saved_timer = current_task->active_time;
-                    uint8_t *gylph = font + 2 + (textbuffer_offset[0] * font[1]);
-                    framebuffer_offset = framebuffer_offset_old;
-                    for (uint8_t y = 0; y < 16; y++)
-                    {
-                        uint16_t *framebuffer_offset16 = (uint16_t *)(framebuffer_offset + tx);
-                        uint24_t *framebuffer_offset24 = (uint24_t *)(framebuffer_offset + tx);
-                        uint32_t *framebuffer_offset32 = (uint24_t *)(framebuffer_offset + tx);
-                        for (uint8_t x = 0; x < 8; x++)
-                        {
-                            if (gylph[y] & screen_text_mask[x])
-                            {
-                                if (bpp[0] == 32)
-                                    (*framebuffer_offset32++) = vga_colors[textbuffer_offset[1] & 0x0f];
-                                else if (bpp[0] == 24)
-                                    (*framebuffer_offset24++).value = vga_colors[textbuffer_offset[1] & 0x0f];
-                                else if (bpp[0] == 16)
-                                    (*framebuffer_offset16++) = vga_colors[textbuffer_offset[1] & 0x0f];
-                            }
-                            else
-                            {
-                                if (bpp[0] == 32)
-                                    (*framebuffer_offset32++) = vga_colors[(textbuffer_offset[1] >> 4) & 0x0f];
-                                else if (bpp[0] == 24)
-                                    (*framebuffer_offset24++).value = vga_colors[(textbuffer_offset[1] >> 4) & 0x0f];
-                                else if (bpp[0] == 16)
-                                    (*framebuffer_offset16++) = vga_colors[(textbuffer_offset[1] >> 4) & 0x0f];
-                            }
-                        }
-                        framebuffer_offset += current_screen->current_video_mode->pitch;
-                    }
+                    screen_drawchar(framebuffer_offset, width, textbuffer_offset[0], textbuffer_offset[1], bpp[0]);
+                    if (current_task->active_time - saved_timer > 120)
+                        saved_timer = current_task->active_time, screen_cursor = !screen_cursor;
                     for (uint8_t y = screen_cursor_start; y < screen_cursor_end; y++)
                     {
                         if (screen_cursor_position >
@@ -143,8 +171,10 @@ void screen_service()
                                     (*framebuffer_offset16++) = vga_colors[0];
                             }
                     }
+                    framebuffer_offset += char_size[0];
                     textbuffer_offset += 2;
                 }
+                framebuffer_offset = framebuffer_offset_old;
             }
         }
     }

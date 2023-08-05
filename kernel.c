@@ -76,8 +76,9 @@ void kernel(multiboot_info_t *info)
     page_install();
     acpi_install();
     vbe_install();
-    // vga_install();
+    vga_install();
     task_install();
+    screen_install();
     extern uint32_t VIDEO_MEMORY;
     extern uint16_t vga_width, vga_height;
     if (screen_get_info())
@@ -87,9 +88,5 @@ void kernel(multiboot_info_t *info)
         vga_height = screen_get_info()->current_video_mode->theight;
     }
     clear_screen();
-    extern heap_t *kheap;
-    kprintf("USED MEMORY: %uMB\nFREE MEMORY: %uMB\n", (uint32_t)heap_get_used_size(kheap) / MB, (uint32_t)heap_get_free_size(kheap) / MB);
-    extern void screen_service();
-    screen_service();
-    // task_add(task_create("loop", loop, NULL));
+    task_add(task_create("loop", loop, NULL));
 }

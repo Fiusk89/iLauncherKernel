@@ -25,6 +25,7 @@ heap_t *heap_create(uint64_t start, uint64_t end, uint64_t max, uint8_t is_kerne
 uint64_t heap_get_free_size(heap_t *heap);
 uint64_t heap_get_used_size(heap_t *heap);
 void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align);
+void *heap_mexpand(heap_t *heap, void *ptr, int64_t size);
 void *heap_mrealloc(heap_t *heap, void *ptr, uint64_t size);
 void *heap_mclone(heap_t *heap, void *ptr);
 void heap_mfree(heap_t *heap, void *ptr);

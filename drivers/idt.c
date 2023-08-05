@@ -24,6 +24,5 @@ void idt_install()
 {
     idtr.limit = (sizeof(idt_entry_t) * 256) - 1;
     idtr.base = (uint32_t)&idt;
-    memset(idt, 0, sizeof(idt));
     load_idt(idtr);
 }

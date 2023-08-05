@@ -45,14 +45,17 @@ void vbe_set_mode(uint16_t mode)
     bios32_service(BIOS_GRAPHICS_SERVICE, &reg_in, &reg_out);
     vbe_current_mode = mode;
     vbe_get_mode(mode);
-    kfree(vbe_modes->text_framebuffer);
-    kfree(vbe_modes->graphic_framebuffer);
-    vbe_modes->text_framebuffer = (uint16_t *)kmalloc((vbe_mode_info->width / 8) *
-                                                      (vbe_mode_info->height / 16) *
-                                                      sizeof(uint16_t));
-    vbe_modes->graphic_framebuffer = (void *)kmalloc(vbe_mode_info->width *
-                                                     vbe_mode_info->height *
-                                                     round((float)vbe_mode_info->bpp / 8.0));
+    if (vbe_modes)
+    {
+        kfree(vbe_modes->text_framebuffer);
+        kfree(vbe_modes->graphic_framebuffer);
+        vbe_modes->text_framebuffer = (uint16_t *)kmalloc((vbe_mode_info->width / 8) *
+                                                          (vbe_mode_info->height / 16) *
+                                                          sizeof(uint16_t));
+        vbe_modes->graphic_framebuffer = (void *)kmalloc(vbe_mode_info->width *
+                                                         vbe_mode_info->height *
+                                                         round((float)vbe_mode_info->bpp / 8.0));
+    }
 }
 
 void *vbe_mode_list()
