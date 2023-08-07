@@ -53,6 +53,11 @@ uint32_t kmalloc(uint32_t size)
     return kmalloc_int(size, 0, 0);
 }
 
+uint32_t krealloc(void *ptr, uint32_t size)
+{
+    return (uint32_t)heap_mrealloc(kheap, ptr, size);
+}
+
 uint32_t kclone(void *ptr)
 {
     return (uint32_t)heap_mclone(kheap, ptr);

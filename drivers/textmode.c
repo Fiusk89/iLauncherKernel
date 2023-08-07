@@ -54,6 +54,13 @@ void remove_last_char()
     if (x == 0 && y > 0)
     {
         x = vga_width - 1, y--;
+        set_cursor_pos(x, y);
+        uint8_t *screen8 = (uint8_t *)(VIDEO_MEMORY + screen_cursor_position * sizeof(uint16_t));
+        while (*screen8 == ' ')
+            screen8 -= 2;
+        screen8 = (uint8_t *)(((uint32_t)screen8 - VIDEO_MEMORY) / sizeof(uint16_t));
+        set_cursor_pos((uint32_t)screen8 % vga_width + 1, (uint32_t)screen8 / vga_width);
+        return;
     }
     else if (x > 0)
     {

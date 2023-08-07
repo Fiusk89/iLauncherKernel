@@ -86,7 +86,7 @@ void page_install()
     kernel_directory->physicalAddr = KERNEL_V2P((uint32_t)&kernel_directory->tablesPhysical);
     current_directory = kernel_directory;
 
-    for (uint32_t i = 0; i < 0x100000; i += 0x1000)
+    for (uint32_t i = 0; i < 0xfffff; i += 0x1000)
     {
         page_alloc_frame(kernel_directory, i, i, 0, 0);
     }
@@ -96,14 +96,16 @@ void page_install()
         page_alloc_frame(kernel_directory, KERNEL_P2V(i), i, 0, 0);
     }
 
-    for (uint32_t i = placement_address; i < placement_address + 0x1000; i += 0x1000)
+    uint32_t aliged_placement_address = KERNEL_ALIGN(placement_address + 0x1000, 0x1000);
+
+    for (uint32_t i = aliged_placement_address; i < aliged_placement_address + 0x1000; i += 0x1000)
     {
         page_alloc_frame(kernel_directory, i, KERNEL_V2P(i), 0, 0);
     }
 
     switch_page_directory(kernel_directory);
     page_enable();
-    kheap = heap_create(placement_address, placement_address + 0x1000, 0xffffffff, 0, 0);
+    kheap = heap_create(aliged_placement_address, aliged_placement_address + 0x1000, 0xffffffff, 0, 0);
 }
 
 void switch_page_directory(page_directory_t *dir)

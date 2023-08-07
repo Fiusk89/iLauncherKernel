@@ -75,6 +75,12 @@ void *vbe_mode_list()
             continue;
         if (mode_info->memory_model != 4 && mode_info->memory_model != 6)
             continue;
+        for (uint32_t i = mode_info->framebuffer;
+             i < mode_info->framebuffer + mode_info->pitch * mode_info->height;
+             i += 0x1000)
+        {
+            page_alloc_frame(kernel_directory, i, i, 0, 0);
+        }
         tmp->flags = (1 << 1);
         tmp->framebuffer = mode_info->framebuffer;
         tmp->mode = mode_list[i];
@@ -93,37 +99,9 @@ void *vbe_mode_list()
     return vesa;
 }
 
-void vbe_map_memory()
-{
-    memcpy((void *)0x9500, "VBE2", 4);
-    register16_t reg_in = {0};
-    register16_t reg_out = {0};
-    reg_in.ax = 0x4F00;
-    reg_in.di = 0x9500;
-    bios32_service(BIOS_GRAPHICS_SERVICE, &reg_in, &reg_out);
-    vbe_mode_info_t *mode_info = vbe_mode_info;
-    uint16_t *mode_list = (uint16_t *)vbe_info->video_modes;
-    for (uint16_t i = 0; mode_list[i] != 0xffff; i++)
-    {
-        vbe_get_mode(mode_list[i]);
-        if ((mode_info->attributes & 0x90) != 0x90)
-            continue;
-        if (mode_info->memory_model != 4 && mode_info->memory_model != 6)
-            continue;
-        for (uint32_t i = mode_info->framebuffer;
-             i < mode_info->framebuffer + mode_info->pitch * mode_info->height;
-             i += 0x1000)
-        {
-            page_alloc_frame(kernel_directory, i, i, 0, 0);
-        }
-    }
-}
-
 void vbe_install()
 {
-    vbe_map_memory();
-    uint32_t colors = 0;
-    memcpy((void *)0x9500, "VBE2", 4);
+    memcpy(vbe_info->signature, "VBE2", 4);
     register16_t reg_in = {0};
     register16_t reg_out = {0};
     reg_in.ax = 0x4F00;

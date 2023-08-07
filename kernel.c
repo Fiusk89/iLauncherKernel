@@ -58,6 +58,11 @@ void loop()
         key = keyboard_get_key();
         if (key == '=')
             reboot();
+        if (key == '\b')
+        {
+            remove_last_char();
+            continue;
+        }
         if (key)
             dos_print_char(key, 0x0f, 0x00);
     }

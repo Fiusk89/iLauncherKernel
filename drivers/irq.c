@@ -30,7 +30,6 @@ void irq_handler(register_t regs)
     uint8_t irq_is_fake = ~pic_read_irq_register(PIC_READ_ISR) & irq_mask;
     if (irq_is_masked | irq_is_fake)
     {
-        // kprintf("FAKE %s IRQ[%u]!\n", irq > 7 ? "SLAVE" : "MASTER", irq);
         if (irq_is_fake && irq > 2)
         {
             if (irq > 7)
