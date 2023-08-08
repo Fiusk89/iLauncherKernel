@@ -29,10 +29,9 @@ static void heap_expand(heap_t *heap, uint64_t new_size)
 {
     if (!heap || !new_size)
         return;
-    new_size = KERNEL_ALIGN(new_size, 0x1000);
     if (new_size < heap->end - heap->start || new_size > heap->max - heap->start)
         return;
-    for (uint32_t i = heap->end - heap->start; i < new_size; i += 0x1000)
+    for (uint64_t i = heap->end - heap->start; i < new_size; i += 0x1000)
     {
         page_alloc_frame(kernel_directory, heap->start + i, NULL, heap->is_kernel, heap->is_writable);
     }
@@ -43,12 +42,11 @@ static void heap_contract(heap_t *heap, uint64_t new_size)
 {
     if (!heap || !new_size)
         return;
-    new_size = KERNEL_ALIGN(new_size, 0x1000);
     if (new_size > heap->end - heap->start)
         return;
     if (new_size < 0x1000)
         new_size = 0x1000;
-    for (uint32_t i = new_size; i < heap->end - heap->start; i += 0x1000)
+    for (uint64_t i = new_size; i < heap->end - heap->start; i += 0x1000)
     {
         page_free_frame(kernel_directory, heap->start + i);
     }
@@ -133,6 +131,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
     if (align)
         size = KERNEL_ALIGN(size + align, align);
     size += sizeof(uint64_t);
+    uint64_t full_size = sizeof(heap_node_t) * 2 + size;
     heap_node_t *heap_node = (heap_node_t *)heap->start;
     heap_expand_free_nodes(heap);
     while (heap_node->next)
@@ -141,23 +140,28 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
             break;
         heap_node = heap_node->next;
     }
-    uint64_t expand_size = sizeof(heap_node_t) * 2 + size;
-    if (expand_size + heap_get_used_size(heap) > heap_get_size(heap))
-    {
-        heap_expand(heap, heap_get_size(heap) + expand_size);
-        if (expand_size + heap_get_used_size(heap) > heap_get_size(heap))
-            return (void *)NULL;
-    }
     if (heap_node->size == size)
     {
+        uint64_t address = NULL;
         heap_node->is_free = false;
         heap_node->align = align;
-        return (void *)((uint64_t)heap_node + sizeof(heap_node_t));
+        if (align)
+            address = KERNEL_ALIGN((uint64_t)heap_node + sizeof(heap_node_t) + sizeof(uint64_t), align);
+        else
+            address = (uint64_t)heap_node + sizeof(heap_node_t) + sizeof(uint64_t);
+        (*(uint64_t *)(address - sizeof(uint64_t))) = (uint64_t)heap_node;
+        return (void *)address;
     }
     else if (heap_node->size > size)
     {
         uint64_t address = NULL;
-        heap_node_t *new_heap_node = (heap_node_t *)((uint64_t)heap_node + sizeof(heap_node_t) * 2 + size);
+        if ((uint64_t)heap_node + full_size + sizeof(heap_node_t) > heap->end)
+        {
+            heap_expand(heap, ((uint64_t)heap_node + full_size + sizeof(heap_node_t)) - heap->end);
+            if ((uint64_t)heap_node + full_size + sizeof(heap_node_t) > heap->end)
+                return (void *)NULL;
+        }
+        heap_node_t *new_heap_node = (heap_node_t *)((uint64_t)heap_node + full_size);
         new_heap_node->signature = HEAP_SIGNATURE;
         new_heap_node->is_free = true;
         new_heap_node->size = heap_node->size - size;

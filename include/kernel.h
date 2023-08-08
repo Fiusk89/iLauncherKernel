@@ -41,7 +41,6 @@
 #include <keyboard.h>
 #include <heap.h>
 #include <kheap.h>
-#include <path.h>
 #include <ilfs.h>
 #include <page.h>
 #include <task.h>

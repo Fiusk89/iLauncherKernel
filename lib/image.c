@@ -1,6 +1,3 @@
-#define STBI_IMPLEMENTATION
-#define STBI_ONLYPNG
-#include <stb_image.h>
 #include <image.h>
 
 void *tga_parse(char *filename)

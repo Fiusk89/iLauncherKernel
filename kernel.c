@@ -50,9 +50,9 @@ void loop()
 {
     extern heap_t *kheap;
     char key = NULL;
-    kprintf("USED MEMORY: %uMB;\nFREE MEMORY: %uMB;\n",
-            (uint32_t)heap_get_used_size(kheap) / MB,
-            (uint32_t)heap_get_free_size(kheap) / MB);
+    kprintf("USED MEMORY: %uKB;\nFREE MEMORY: %uKB;\n",
+            (uint32_t)heap_get_used_size(kheap) / KB,
+            (uint32_t)heap_get_free_size(kheap) / KB);
     while (true)
     {
         key = keyboard_get_key();
