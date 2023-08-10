@@ -73,15 +73,15 @@ void kernel(multiboot_info_t *info)
 {
     multiboot_module_t *mods = (multiboot_module_t *)KERNEL_P2V(info->mods_addr);
     multiboot_memory_map_t *memory_map = (multiboot_memory_map_t *)KERNEL_P2V(info->mmap_addr);
-    for (uint64_t i = 0; i < info->mmap_length; i++)
+    for (uint64_t i = 0; i < info->mmap_length / sizeof(multiboot_memory_map_t); i++)
     {
-        if (memory_map[i].type == MULTIBOOT_MEMORY_AVAILABLE)
+        if (memory_map[i].type == MULTIBOOT_MEMORY_AVAILABLE && memory_map[i].addr == 0x100000)
         {
             mm_addr = memory_map[i].addr;
             mm_length = memory_map[i].len;
+            break;
         }
     }
-
     gdt_install();
     idt_install();
     isr_install();

@@ -4,6 +4,7 @@
 #define abs(a) (((a) < 0) ? -(a) : (a))
 #define max(a, b) (((a) > (b)) ? (a) : (b))
 #define min(a, b) (((a) < (b)) ? (a) : (b))
+#define limit(a, b) (((a) > (b)) ? (b) : (a))
 #define sign(x) ((x < 0) ? -1 : ((x > 0) ? 1 : 0))
 
 static int64_t pow(int64_t x, int32_t n)
@@ -40,8 +41,10 @@ static int64_t floor(float x)
     float n = 1;
     for (n = 1; xcopy > (n * 10); n *= 10, ++zeros)
         ;
-    for (xcopy -= n; zeros != -1; xcopy -= n) {
-        if (xcopy < 0) {
+    for (xcopy -= n; zeros != -1; xcopy -= n)
+    {
+        if (xcopy < 0)
+        {
             xcopy += n;
             n /= 10;
             --zeros;

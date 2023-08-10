@@ -38,7 +38,6 @@ void screen_add(screen_info_t *screen)
     if (!start_screen)
     {
         start_screen = current_screen = screen;
-        screen_is_empty = false;
         return;
     }
     screen_info_t *tmp_screen = start_screen;
@@ -49,16 +48,30 @@ void screen_add(screen_info_t *screen)
     tmp_screen->next = screen;
 }
 
-void screen_drawchar(void *framebuffer, uint32_t pitch, uint8_t chr, uint8_t color, uint8_t bpp)
+static inline void screen_drawchar(void *framebuffer, uint32_t pitch, uint8_t chr, uint8_t color, uint8_t bpp)
 {
     if (!framebuffer)
         return;
     uint8_t *gylph = font + 2 + (chr * font[1]);
+    uint32_t *framebuffer_offset32;
+    uint24_t *framebuffer_offset24;
+    uint16_t *framebuffer_offset16;
     for (uint8_t y = 0; y < font[1]; y++)
     {
-        uint32_t *framebuffer_offset32 = (uint32_t *)framebuffer;
-        uint24_t *framebuffer_offset24 = (uint24_t *)framebuffer;
-        uint16_t *framebuffer_offset16 = (uint16_t *)framebuffer;
+        switch (bpp)
+        {
+        case 32:
+            framebuffer_offset32 = (uint32_t *)framebuffer;
+            break;
+        case 24:
+            framebuffer_offset24 = (uint24_t *)framebuffer;
+            break;
+        case 16:
+            framebuffer_offset16 = (uint16_t *)framebuffer;
+            break;
+        default:
+            break;
+        }
         for (uint8_t x = 0; x < font[0]; x++)
         {
             if (gylph[y] & screen_text_mask[x])
@@ -107,13 +120,13 @@ void screen_service()
     pit_t saved_timer;
     while (true)
     {
-        if (screen_is_empty || !start_screen || !current_screen)
+        if (!start_screen || !current_screen)
             continue;
         if (current_screen->current_video_mode->flags & (1 << 1))
         {
             uint8_t bpp[2] = {
                 current_screen->current_video_mode->bpp,
-                round((float)current_screen->current_video_mode->bpp / 8.0f),
+                (current_screen->current_video_mode->bpp + 1) >> 3,
             };
             uint32_t framebuffer_size = current_screen->current_video_mode->pitch *
                                         current_screen->current_video_mode->height;
@@ -136,7 +149,7 @@ void screen_service()
                 for (uint32_t tx = 0; tx < width; tx += char_size[0])
                 {
                     screen_drawchar(framebuffer_offset, width, textbuffer_offset[0], textbuffer_offset[1], bpp[0]);
-                    if (current_task->active_time - saved_timer > 120)
+                    if (current_task->active_time - saved_timer > 60)
                         saved_timer = current_task->active_time, screen_cursor = !screen_cursor;
                     for (uint8_t y = screen_cursor_start; y < screen_cursor_end; y++)
                     {
