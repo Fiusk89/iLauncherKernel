@@ -33,6 +33,23 @@ uint32_t kmalloc_int(uint32_t size, uint16_t align, uint32_t *phys)
     }
 }
 
+void kheap_install()
+{
+    uint32_t aliged_placement_address = KERNEL_ALIGN(placement_address + 0x1000, 0x1000);
+    for (uint32_t i = aliged_placement_address; i < aliged_placement_address + 0x1000; i += 0x1000)
+    {
+        page_alloc_frame(kernel_directory, i, KERNEL_V2P(i), 0, 0);
+    }
+    if (mm_length < GB - KERNEL_V2P(aliged_placement_address))
+    {
+        kheap = heap_create(aliged_placement_address, aliged_placement_address + 0x1000, aliged_placement_address + mm_length, 0, 0);
+    }
+    else
+    {
+        kheap = heap_create(aliged_placement_address, aliged_placement_address + 0x1000, 0xffffffff, 0, 0);
+    }
+}
+
 uint32_t kmalloc_a(uint32_t size, uint16_t align)
 {
     return kmalloc_int(size, align, 0);

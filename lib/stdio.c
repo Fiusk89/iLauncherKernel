@@ -52,35 +52,40 @@ int32_t kprintf(const char *__restrict format, ...)
 			format = format_begun_at;
 			goto print_c;
 		}
-		if (*format == 'c')
+		char c;
+		const char *s;
+		uint32_t u;
+		float f;
+		uint32_t x;
+		switch (*format++)
 		{
-			format++;
-			char c = (char)va_arg(parameters, int);
+		case 'c':
+			c = (char)va_arg(parameters, int);
 			print(&c, sizeof(c));
-		}
-		else if (*format == 's')
-		{
-			format++;
-			const char *s = va_arg(parameters, const char *);
-			print(s, strlen(s));
-		}
-		else if (*format == 'u')
-		{
-			format++;
-			uint32_t u = (uint32_t)va_arg(parameters, uint32_t);
+			break;
+		case 's':
+			s = va_arg(parameters, const char *);
+			print(s, strlen(s) - 1);
+			break;
+		case 'u':
+			u = (uint32_t)va_arg(parameters, uint32_t);
 			char itoa_char[256];
 			itoa(itoa_char, (int64_t)u, 255);
 			print(itoa_char, strlen(itoa_char));
-		}
-		else if (*format == 'x')
-		{
-			format++;
-			uint32_t x = (uint32_t)va_arg(parameters, int);
+			break;
+		case 'f':
+			f = (float)va_arg(parameters, double);
+			char ftoa_char[256];
+			ftoa(ftoa_char, f, 255);
+			print(ftoa_char, strlen(ftoa_char));
+			break;
+		case 'x':
+			x = (uint32_t)va_arg(parameters, uint32_t);
 			dos_print_hex(x, 0x0f, 0);
-		}
-		else
-		{
+			break;
+		default:
 			goto incomprehensible_conversion;
+			break;
 		}
 	}
 	va_end(parameters);

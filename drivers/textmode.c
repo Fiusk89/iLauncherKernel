@@ -1,6 +1,6 @@
 #include <textmode.h>
 
-uint16_t cursor_pos = -1;
+uint16_t cursor_pos = 0;
 uint32_t VIDEO_MEMORY = KERNEL_P2V(0xb8000);
 uint16_t vga_width = 80, vga_height = 25;
 uint8_t vga_cursor_color = 0x07;
@@ -53,34 +53,13 @@ void remove_last_char()
     uint16_t x = screen_cursor_position % vga_width;
     if (x == 0 && y > 0)
     {
-        uint8_t *screen8 = (uint8_t *)(VIDEO_MEMORY + screen_cursor_position * sizeof(uint16_t));
-        if (screen8[-2] != ' ')
-        {
-            if (x == 0 && y > 0)
-            {
-                x = vga_width - 1, y--;
-                set_cursor_pos(x, y);
-            }
-            else if (x > 0)
-            {
-                x--;
-            }
-            uint16_t *screen = (uint16_t *)(VIDEO_MEMORY + (screen_cursor_position * sizeof(uint16_t)));
-            *screen = (((vga_cursor_color & 0x0f) << 8) | (' ' & 0xff));
-            return;
-        }
         x = vga_width - 1, y--;
-        set_cursor_pos(x, y);
-        while (*screen8 == ' ')
-            screen8 -= 2;
-        screen8 = (uint8_t *)(((uint32_t)screen8 - VIDEO_MEMORY) / sizeof(uint16_t));
-        set_cursor_pos((uint32_t)screen8 % vga_width + 1, (uint32_t)screen8 / vga_width);
     }
     else if (x > 0)
     {
         x--;
-        set_cursor_pos(x, y);
     }
+    set_cursor_pos(x, y);
     uint16_t *screen = (uint16_t *)(VIDEO_MEMORY + (screen_cursor_position * sizeof(uint16_t)));
     *screen = (((vga_cursor_color & 0x0f) << 8) | (' ' & 0xff));
 }

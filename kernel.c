@@ -1,5 +1,7 @@
 #include <kernel.h>
 
+uint64_t mm_addr, mm_length;
+
 extern void switch_usermode();
 
 void poweroff()
@@ -48,11 +50,10 @@ uint8_t chr[0] = {
 
 void loop()
 {
-    extern heap_t *kheap;
     char key = NULL;
-    kprintf("USED MEMORY: %uKB;\nFREE MEMORY: %uKB;\n",
-            (uint32_t)heap_get_used_size(kheap) / KB,
-            (uint32_t)heap_get_free_size(kheap) / KB);
+    kprintf("USED MEMORY: %uMB;\nFREE MEMORY: %uMB;\n",
+            (uint32_t)heap_get_used_size(kheap) / (uint32_t)MB,
+            (uint32_t)heap_get_free_size(kheap) / (uint32_t)MB);
     while (true)
     {
         key = keyboard_get_key();
@@ -71,6 +72,16 @@ void loop()
 void kernel(multiboot_info_t *info)
 {
     multiboot_module_t *mods = (multiboot_module_t *)KERNEL_P2V(info->mods_addr);
+    multiboot_memory_map_t *memory_map = (multiboot_memory_map_t *)KERNEL_P2V(info->mmap_addr);
+    for (uint64_t i = 0; i < info->mmap_length; i++)
+    {
+        if (memory_map[i].type == MULTIBOOT_MEMORY_AVAILABLE)
+        {
+            mm_addr = memory_map[i].addr;
+            mm_length = memory_map[i].len;
+        }
+    }
+
     gdt_install();
     idt_install();
     isr_install();
@@ -83,6 +94,7 @@ void kernel(multiboot_info_t *info)
     fpu_install();
     bios32_install();
     page_install();
+    kheap_install();
     acpi_install();
     vbe_install();
     vga_install();

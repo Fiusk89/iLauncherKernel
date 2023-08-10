@@ -90,7 +90,7 @@ char *ftoa(char *ptr, float value, uint32_t n)
         ptr[ptr_len] = '\0';
         return ptr;
     }
-    for (uint32_t i = 0; i < 16 - 1 && i < (ptr_len + 1) - n; i++)
+    for (uint32_t i = 0; i < 8 - 1 && i < n - (ptr_len + 1); i++)
     {
         tmpv *= 10.5;
         if ((int64_t)tmpv == 0 || (int64_t)tmpv > 9)

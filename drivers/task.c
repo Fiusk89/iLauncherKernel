@@ -74,7 +74,7 @@ void task_remove(task_t *task, uint8_t state, uint32_t state_info, uint32_t valu
     task->state_info = state_info;
     task->value = value;
     task_node_remove(task->pid);
-    if (current_task != task)
+    if (start_task != task)
         task_free(task);
     node_prev->ready = true;
 }
