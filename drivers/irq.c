@@ -16,8 +16,8 @@ void irq_remove_handler(uint8_t irq)
 {
     if (irq > 15)
         return;
-    irq_handlers[irq] = 0;
     pic_mask_irq(irq);
+    irq_handlers[irq] = 0;
 }
 
 void irq_handler(register_t regs)
@@ -28,19 +28,12 @@ void irq_handler(register_t regs)
     uint16_t irq_mask = 1 << irq;
     uint8_t irq_is_masked = pic_cache_irq_mask & irq_mask;
     uint8_t irq_is_fake = ~pic_read_irq_register(PIC_READ_ISR) & irq_mask;
-    if (irq_is_masked | irq_is_fake)
+    if (irq == 7 && irq == 15 && (irq_is_masked | irq_is_fake))
     {
-        if (irq_is_fake && irq > 2)
-        {
-            if (irq > 7)
-                pic_send_eoi(PIC_CASCADE, irq_is_masked);
-            irq_spurious++;
-        }
-        else if (irq > 2)
-        {
-            if (!irq_handlers[irq])
-                pic_send_eoi(irq, irq_is_masked), irq_spurious++;
-        }
+        if (irq > 7)
+            pic_send_eoi(PIC_CASCADE, false);
+        irq_spurious++;
+        return;
     }
     if (irq_handlers[irq])
     {

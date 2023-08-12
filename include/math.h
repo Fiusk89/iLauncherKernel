@@ -117,6 +117,6 @@ typedef struct FPoint
 
 typedef struct DPoint
 {
-    float x, y;
+    double x, y;
 } DPoint_t;
 #endif

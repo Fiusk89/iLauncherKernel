@@ -1,6 +1,8 @@
 {
     "files.associations": {
         "random": "c",
-        "compare": "c"
+        "compare": "c",
+        "ctype.h": "c",
+        "image.h": "c"
     }
 }

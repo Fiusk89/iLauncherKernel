@@ -10,6 +10,11 @@ void pit_handler(register_t *r)
         current_task->active_time++;
         schedule();
     }
+    else
+    {
+        if (pit_delay)
+            pit_delay--;
+    }
 }
 
 void pit_timer_hz(uint32_t hz)

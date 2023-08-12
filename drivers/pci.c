@@ -23,18 +23,18 @@ void pci_write_bar_address(uint8_t bus, uint8_t slot, uint8_t function, uint8_t 
     pci_write(bus, slot, function, bar + 2, (value >> 16) & 0xffff);
 }
 
-uint32_t *pci_find_devices(uint8_t length, uint8_t class, uint8_t subclass, uint8_t subsubclass)
+uint32_t *pci_find_devices(uint8_t length, uint8_t class, uint8_t subclass, uint8_t interface)
 {
-    uint32_t *devices = (uint32_t *)kmalloc(256 * sizeof(uint32_t));
-    uint32_t devices_pos = 0;
-    memset(devices, 0, 256 * sizeof(uint32_t));
+    uint32_t *devices = (uint32_t *)kmalloc(sizeof(uint32_t));
     if (!devices)
-        return (void*)NULL;
-    for (uint8_t bus = 0; bus < 256; bus++)
+        return (void *)NULL;
+    uint8_t devices_pos = 0;
+    memset(devices, 0, sizeof(uint32_t));
+    for (uint8_t bus = 0; bus < 255; bus++)
     {
-        for (uint8_t slot = 0; slot < 32; slot++)
+        for (uint8_t slot = 0; slot < 31; slot++)
         {
-            for (uint8_t function = 0; function < 8; function++)
+            for (uint8_t function = 0; function < 7; function++)
             {
                 uint16_t vendor = pci_read(bus, slot, function, 0x00);
                 uint16_t device = pci_read(bus, slot, function, 0x02);
@@ -42,31 +42,51 @@ uint32_t *pci_find_devices(uint8_t length, uint8_t class, uint8_t subclass, uint
                 {
                     uint8_t pci_class = (pci_read(bus, slot, function, 0x0A) >> 8) & 0xFF;
                     uint8_t pci_subclass = (pci_read(bus, slot, function, 0x0A)) & 0xFF;
-                    uint8_t pci_subsubclass = (pci_read(bus, slot, function, 0x08) >> 8) & 0xFF;
+                    uint8_t pci_interface = (pci_read(bus, slot, function, 0x08) >> 8) & 0xFF;
+                    uint8_t old_devices_pos = devices_pos;
                     if (length == 1)
                     {
                         if (pci_class == class)
-                            devices[devices_pos++] = (bus << 16) |
+                        {
+                            devices[devices_pos++] = (function << 16) |
                                                      (slot << 8) |
-                                                     function;
+                                                     bus;
+                        }
                     }
                     else if (length == 2)
                     {
                         if (pci_class == class && pci_subclass == subclass)
-                            devices[devices_pos++] = (bus << 16) |
+                        {
+                            devices[devices_pos++] = (function << 16) |
                                                      (slot << 8) |
-                                                     function;
+                                                     bus;
+                        }
                     }
                     else if (length == 3)
                     {
-                        if (pci_class == class && pci_subclass == subclass && pci_subsubclass == subsubclass)
-                            devices[devices_pos++] = (bus << 16) |
+                        if (pci_class == class && pci_subclass == subclass && pci_interface == interface)
+                        {
+                            devices[devices_pos++] = (function << 16) |
                                                      (slot << 8) |
-                                                     function;
+                                                     bus;
+                        }
+                    }
+                    if (old_devices_pos != devices_pos)
+                    {
+                        devices = (uint32_t *)krealloc(devices, sizeof(uint32_t) * devices_pos);
+                        devices[devices_pos] = 0x00000000;
                     }
                 }
             }
         }
     }
-    return devices;
+    if (!devices_pos)
+    {
+        kfree(devices);
+        return (uint32_t *)NULL;
+    }
+    else
+    {
+        return devices;
+    }
 }

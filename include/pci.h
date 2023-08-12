@@ -13,5 +13,5 @@ uint16_t pci_read(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset);
 void pci_write(uint8_t bus, uint8_t slot, uint8_t function, uint8_t offset, uint32_t value);
 uint32_t pci_read_bar_address(uint8_t bus, uint8_t slot, uint8_t function, uint8_t bar);
 void pci_write_bar_address(uint8_t bus, uint8_t slot, uint8_t function, uint8_t bar, uint32_t value);
-uint32_t *pci_find_devices(uint8_t length, uint8_t class, uint8_t subclass, uint8_t subsubclass);
+uint32_t *pci_find_devices(uint8_t length, uint8_t class, uint8_t subclass, uint8_t interface);
 #endif

@@ -71,6 +71,7 @@ void loop()
 
 void kernel(multiboot_info_t *info)
 {
+    clear_screen();
     multiboot_module_t *mods = (multiboot_module_t *)KERNEL_P2V(info->mods_addr);
     multiboot_memory_map_t *memory_map = (multiboot_memory_map_t *)KERNEL_P2V(info->mmap_addr);
     for (uint64_t i = 0; i < info->mmap_length / sizeof(multiboot_memory_map_t); i++)
@@ -86,15 +87,16 @@ void kernel(multiboot_info_t *info)
     idt_install();
     isr_install();
     irq_install();
-    syscall_install();
+    page_install();
+    kheap_install();
     pit_install();
+    uhci_install();
+    syscall_install();
     keyboard_install();
     mouse_install();
     cpuid_install();
     fpu_install();
     bios32_install();
-    page_install();
-    kheap_install();
     acpi_install();
     vbe_install();
     vga_install();

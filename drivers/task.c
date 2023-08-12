@@ -21,7 +21,7 @@ void task_free(task_t *task)
 {
     kfree(task->context.page);
     kfree(task->context.heap);
-    kfree(task->context.stack);
+    kfree(task->context.stack1);
     kfree(task);
 }
 
@@ -48,8 +48,8 @@ bool task_node_remove(uint32_t pid)
         tmp_task = tmp_task->next;
     if (!tmp_task->next || tmp_task->next->pid != pid)
         return true;
-    tmp_task->next->prev->next = tmp_task->next->next;
     tmp_task->next->next->prev = tmp_task->next->prev;
+    tmp_task->next = tmp_task->next->next;
     return false;
 }
 
@@ -57,6 +57,13 @@ void task_idle()
 {
     while (1)
         asm volatile("hlt");
+}
+
+void task_exit()
+{
+    current_task->state = TASK_TERMINATED;
+    while (true)
+        kprintf("Wait\n");
 }
 
 task_t *task_get()
@@ -113,9 +120,10 @@ task_t *task_create(uint8_t *name, void *function, void *flags)
     regs->eflags = 0x206;
     regs->cs = 0x08;
     regs->gs = regs->fs = regs->es = regs->ds = 0x10;
-    regs->eip = (uint32_t)task_helper;
-    task->eip = (uint32_t)function;
+    regs->eip = (uint32_t)function;
     task->flags = (uint32_t)flags;
+    task_register_t *task_return = (task_register_t *)((uint64_t)task->context.stack + sizeof(task_register_t) + sizeof(register_t));
+    task_return->eip = (uint64_t)task_exit;
     return task;
 }
 
@@ -155,6 +163,12 @@ void schedule()
         current_task = current_task->next;
         if (current_task->state == TASK_PAUSED)
             current_task = current_task->next;
+        if (current_task->state == TASK_TERMINATED)
+        {
+            current_task = current_task->next;
+            task_node_remove(current_task->prev->pid);
+            //task_free(current_task->prev);
+        }
     }
     else
     {
