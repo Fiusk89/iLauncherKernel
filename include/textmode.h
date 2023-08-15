@@ -1,3 +1,4 @@
+#pragma once
 #ifndef VIDEO_H
 #define VIDEO_H
 #include <kernel.h>

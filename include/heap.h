@@ -1,3 +1,4 @@
+#pragma once
 #ifndef HEAP_H
 #define HEAP_H
 #include <kernel.h>

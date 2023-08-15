@@ -1,3 +1,4 @@
+#pragma once
 #ifndef APIC_H
 #define APIC_H
 #include <kernel.h>

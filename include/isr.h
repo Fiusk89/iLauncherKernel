@@ -1,3 +1,4 @@
+#pragma once
 #ifndef ISR_H
 #define ISR_H
 #include <kernel.h>

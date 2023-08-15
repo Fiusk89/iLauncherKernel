@@ -1,3 +1,4 @@
+#pragma once
 #ifndef IDE_H
 #define IDE_H
 #include <kernel.h>

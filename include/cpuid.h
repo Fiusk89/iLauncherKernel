@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CPUID_H
 #define CPUID_H
 #include <kernel.h>

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef ILFS_H
 #define ILFS_H
 #include <kernel.h>

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef KERNEL_H
 #define KERNEL_H
 #define KERNEL_BASE_ADDRESS 0xC0000000

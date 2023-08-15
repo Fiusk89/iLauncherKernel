@@ -1,3 +1,4 @@
+#pragma once
 #ifndef BLEND_H
 #define BLEND_H
 #include <ctype.h>

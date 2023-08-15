@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PCI_H
 #define PCI_H
 #include <kernel.h>

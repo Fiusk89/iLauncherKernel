@@ -1,3 +1,4 @@
+#pragma once
 #ifndef RLE_H
 #define RLE_H
 #ifndef KERNEL_H

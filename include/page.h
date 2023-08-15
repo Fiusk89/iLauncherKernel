@@ -1,3 +1,4 @@
+#pragma once
 #ifndef PAGE_H
 #define PAGE_H
 #include <kernel.h>

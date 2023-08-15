@@ -1,3 +1,4 @@
+#pragma once
 #ifndef BIOS32_H
 #define BIOS32_H
 #include <kernel.h>

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef CTYPE_H
 #define CTYPE_H
 #define _STDINT_H

@@ -1,3 +1,4 @@
+#pragma once
 #ifndef FS_H
 #define FS_H
 #include <ctype.h>
@@ -7,11 +8,21 @@
 #define FS_BLOCKDEVICE 0x04
 #define FS_PIPE 0x05
 #define FS_SYMLINK 0x06
-#define FS_MOUNTPOINT 0x08
+#define FS_MOUNTPOINT 0x07
+#define FS_OPEN_READ 0x01
+#define FS_OPEN_WRITE 0x02
+
+typedef struct fs_dir
+{
+    char name[256];
+    uint32_t index;
+    struct fs_dir *prev;
+    struct fs_dir *next;
+} fs_dir_t;
 
 typedef struct fs_node
 {
-    char name[128];
+    char name[256];
     uint32_t mask;
     uint32_t uid;
     uint32_t gid;
@@ -19,25 +30,22 @@ typedef struct fs_node
     uint32_t inode;
     uint32_t length;
     uint32_t impl;
-    uint32_t (*read)(struct fs_node *, uint32_t, uint32_t, uint8_t *);
-    uint32_t (*write)(struct fs_node *, uint32_t, uint32_t, uint8_t *);
-    void (*open)(struct fs_node *);
+    uint32_t (*read)(struct fs_node *, uint32_t, uint32_t, void *);
+    uint32_t (*write)(struct fs_node *, uint32_t, uint32_t, void *);
+    void (*open)(struct fs_node *, uint8_t);
     void (*close)(struct fs_node *);
-    struct dirent *(*readdir)(struct fs_node *, uint32_t);
+    struct fs_dir *(*readdir)(struct fs_node *, uint32_t);
     struct fs_node *(*finddir)(struct fs_node *, char *name);
-    struct fs_node *ptr;
+    struct fs_node *prev;
+    struct fs_node *next;
 } fs_node_t;
 
-typedef struct fs_dirent
-{
-    char name[128];
-    uint32_t ino;
-} fs_dirent_t;
+extern fs_node_t *fs_root;
 
-uint32_t read_fs(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer);
-uint32_t write_fs(fs_node_t *node, uint32_t offset, uint32_t size, uint8_t *buffer);
-void open_fs(fs_node_t *node, uint8_t read, uint8_t write);
-void close_fs(fs_node_t *node);
-fs_dirent_t *readdir_fs(fs_node_t *node, uint32_t index);
-fs_node_t *finddir_fs(fs_node_t *node, char *name);
+uint32_t fs_read(fs_node_t *node, uint32_t offset, uint32_t size, void *buffer);
+uint32_t fs_write(fs_node_t *node, uint32_t offset, uint32_t size, void *buffer);
+void fs_open(fs_node_t *node, uint8_t flags);
+void fs_close(fs_node_t *node);
+fs_dir_t *fs_readdir(fs_node_t *node, uint32_t index);
+fs_node_t *fs_finddir(fs_node_t *node, char *name);
 #endif

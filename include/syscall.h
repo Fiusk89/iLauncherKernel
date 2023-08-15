@@ -1,3 +1,4 @@
+#pragma once
 #ifndef SYSCALL_H
 #define SYSCALL_H
 #include <kernel.h>

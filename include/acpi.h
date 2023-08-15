@@ -1,3 +1,4 @@
+#pragma once
 #ifndef ACPI_H
 #define ACPI_H
 #include <kernel.h>

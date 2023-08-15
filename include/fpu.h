@@ -1,3 +1,4 @@
+#pragma once
 #ifndef FPU_H
 #define FPU_H
 #include <kernel.h>

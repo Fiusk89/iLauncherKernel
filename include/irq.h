@@ -1,3 +1,4 @@
+#pragma once
 #ifndef IRQ_H
 #define IRQ_H
 #include <kernel.h>

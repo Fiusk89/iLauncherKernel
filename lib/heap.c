@@ -78,18 +78,21 @@ static void heap_expand_free_nodes(heap_t *heap)
         {
             if (!heap_node_end->is_free)
                 break;
-            heap_node->size += heap_node_end->size;
             heap_node_end = heap_node_end->next;
         }
         if (heap_node_end)
         {
+            heap_node->size = (uint64_t)heap_node_end - ((uint64_t)heap_node + sizeof(heap_node_t));
             heap_node->align = NULL;
             heap_node->next = heap_node_end;
             heap_node_end->prev = heap_node;
         }
         else
         {
-            heap_node->size += (uint64_t)heap_node->next - ((uint64_t)heap_node + sizeof(heap_node_t));
+            if (heap_node->next->next)
+                return;
+            heap_node->size = ((uint64_t)heap_node->next - ((uint64_t)heap_node + sizeof(heap_node_t))) +
+                              heap_node->next->size;
             heap_node->align = NULL;
             heap_node->next = heap_node->next->next;
         }

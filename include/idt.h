@@ -1,3 +1,4 @@
+#pragma once
 #ifndef IDT_H
 #define IDT_H
 #include <ctype.h>

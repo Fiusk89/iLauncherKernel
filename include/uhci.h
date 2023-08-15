@@ -1,3 +1,4 @@
+#pragma once
 #ifndef UHCI_H
 #define UHCI_H
 #include <kernel.h>
