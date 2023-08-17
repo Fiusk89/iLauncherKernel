@@ -65,7 +65,7 @@ int32_t kprintf(const char *__restrict format, ...)
 			break;
 		case 's':
 			s = va_arg(parameters, const char *);
-			print(s, strlen(s) - 1);
+			print(s, strlen(s));
 			break;
 		case 'u':
 			u = (uint32_t)va_arg(parameters, uint32_t);

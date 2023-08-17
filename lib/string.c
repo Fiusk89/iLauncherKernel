@@ -74,9 +74,7 @@ bool strcmp(char *str1, char *str2)
 
 char *strcpy(char *str1, char *str2)
 {
-    int i = 0;
-    int len = strlen(str2);
-    for (i = 0; i < len; i++)
+    for (uint32_t i = 0; i < strlen(str2); i++)
     {
         str1[i] = str2[i];
     }

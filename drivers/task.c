@@ -111,9 +111,11 @@ task_t *task_create(uint8_t *name, void *function, void *flags)
     else
         memcpy(task->name, name, name_length);
     task->pid = task_pid();
-    task->context.stack = (void *)kmalloc_a(TASK_STACK_SIZE, 0x1000);
-    task->context.stack1 = task->context.stack;
-    memset(task->context.stack, 0, TASK_STACK_SIZE);
+    task->context.stack = (void *)kmalloc_a(TASK_STACK_SIZE, 0x1000) +
+                          (TASK_STACK_SIZE - (sizeof(task_register_t) * 2 + sizeof(task_register_t)));
+    task->context.stack1 = task->context.stack -
+                           (TASK_STACK_SIZE - (sizeof(task_register_t) * 2 + sizeof(task_register_t)));
+    memset(task->context.stack1, 0, TASK_STACK_SIZE);
     task_register_t *context = (task_register_t *)task->context.stack;
     context->eip = (uint64_t)isr_exit;
     register_t *regs = (register_t *)((uint64_t)task->context.stack + sizeof(task_register_t));
@@ -167,7 +169,7 @@ void schedule()
         {
             current_task = current_task->next;
             task_node_remove(current_task->prev->pid);
-            //task_free(current_task->prev);
+            // task_free(current_task->prev);
         }
     }
     else

@@ -41,20 +41,23 @@ void vga_set_mode(uint8_t *regs)
     }
     inb(VGA_INSTAT_READ);
     outb(VGA_AC_INDEX, 0x20);
+    //vga_set_palette(vga_palette);
 }
 
 void vga_set_color(uint8_t index, uint32_t rgb)
 {
     outb(VGA_DAC_WRITE_INDEX, index);
-    outb(VGA_DAC_DATA, (rgb & 0xff));
-    outb(VGA_DAC_DATA, ((rgb >> 8) & 0xff));
-    outb(VGA_DAC_DATA, ((rgb >> 16) & 0xff));
+    outb(VGA_DAC_DATA, ((rgb >> 16) & 0xff) >> 2);
+    outb(VGA_DAC_DATA, ((rgb >> 8) & 0xff) >> 2);
+    outb(VGA_DAC_DATA, ((rgb)&0xff) >> 2);
 }
 
 void vga_set_palette(uint32_t *palette)
 {
     for (uint8_t i = 0; i < 255; i++)
-        vga_set_color(i, palette[i]);
+    {
+        vga_set_color(i, *palette++);
+    }
 }
 
 void vga_copy2framebuffer(uint8_t *vga_buffer, uint8_t p)

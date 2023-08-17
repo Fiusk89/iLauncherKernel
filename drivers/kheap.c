@@ -40,7 +40,7 @@ void kheap_install()
     {
         page_alloc_frame(kernel_directory, i, KERNEL_V2P(i), 0, 0);
     }
-    kheap = heap_create(aliged_placement_address, aliged_placement_address + 0x1000, limit(aliged_placement_address + mm_addr + mm_length, 0xffffffff), 0, 0);
+    kheap = heap_create(aliged_placement_address, aliged_placement_address, aliged_placement_address + 0x1000, limit(aliged_placement_address + mm_addr + mm_length, 0xffffffff), 0, 0);
 }
 
 uint32_t kmalloc_a(uint32_t size, uint16_t align)

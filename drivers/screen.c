@@ -48,7 +48,8 @@ void screen_add(screen_info_t *screen)
     tmp_screen->next = screen;
 }
 
-static inline void screen_drawchar(void *framebuffer, uint32_t pitch, uint8_t chr, uint8_t color, uint8_t bpp)
+static inline void screen_drawchar(void *framebuffer, uint16_t pitch,
+                                   uint8_t chr, uint8_t color, uint8_t bpp)
 {
     if (!framebuffer)
         return;
@@ -128,8 +129,6 @@ void screen_service()
                 current_screen->current_video_mode->bpp,
                 (current_screen->current_video_mode->bpp + 1) >> 3,
             };
-            uint32_t framebuffer_size = current_screen->current_video_mode->pitch *
-                                        current_screen->current_video_mode->height;
             uint16_t width = current_screen->current_video_mode->pitch;
             uint16_t height = current_screen->current_video_mode->height;
             uint16_t cursor_pos[2] = {
@@ -142,19 +141,22 @@ void screen_service()
             };
             uint8_t *textbuffer_offset = (uint8_t *)current_screen->text_framebuffer;
             uint8_t *textbuffer_offset2 = (uint8_t *)&current_screen->text_framebuffer[screen_cursor_position];
-            for (uint32_t ty = 0; ty < framebuffer_size; ty += current_screen->current_video_mode->pitch * font[1])
+            for (uint32_t ty = 0; ty < current_screen->current_video_mode->theight; ty++)
             {
-                void *framebuffer_offset = (void *)(current_screen->graphic_framebuffer + ty);
+                void *framebuffer_offset = (void *)current_screen->current_video_mode->framebuffer +
+                                           (ty * font[1] * width);
                 void *framebuffer_offset_old = framebuffer_offset;
-                for (uint32_t tx = 0; tx < width; tx += char_size[0])
+                for (uint32_t tx = 0; tx < current_screen->current_video_mode->twidth; tx++)
                 {
-                    screen_drawchar(framebuffer_offset, width, textbuffer_offset[0], textbuffer_offset[1], bpp[0]);
+                    screen_drawchar(framebuffer_offset,
+                                    current_screen->current_video_mode->pitch,
+                                    textbuffer_offset[0], textbuffer_offset[1], bpp[0]);
                     framebuffer_offset += char_size[0];
                     textbuffer_offset += 2;
                 }
                 framebuffer_offset = framebuffer_offset_old;
             }
-            if (current_task->active_time - saved_timer > 50)
+            if (current_task->active_time - saved_timer > 60)
                 saved_timer = current_task->active_time, screen_cursor = !screen_cursor;
             for (uint8_t y = screen_cursor_start; y < screen_cursor_end; y++)
             {
@@ -162,7 +164,7 @@ void screen_service()
                     current_screen->current_video_mode->twidth *
                         current_screen->current_video_mode->theight)
                     break;
-                void *framebuffer_offset2 = (void *)(current_screen->graphic_framebuffer +
+                void *framebuffer_offset2 = (void *)(current_screen->current_video_mode->framebuffer +
                                                      (cursor_pos[0] * bpp[1]) +
                                                      (current_screen->current_video_mode->pitch * (y + cursor_pos[1])));
                 uint16_t *framebuffer_offset16 = (uint16_t *)framebuffer_offset2;
@@ -178,7 +180,7 @@ void screen_service()
                         else if (bpp[0] == 16)
                             (*framebuffer_offset16++) = vga_colors[textbuffer_offset2[1] & 0x0f];
                     }
-                else if (!textbuffer_offset2[0])
+                else
                     for (uint8_t x = 0; x < 8; x++)
                     {
                         if (bpp[0] == 32)
@@ -189,9 +191,6 @@ void screen_service()
                             (*framebuffer_offset16++) = vga_colors[0];
                     }
             }
-            memcpy((void *)current_screen->current_video_mode->framebuffer,
-                   current_screen->graphic_framebuffer,
-                   current_screen->current_video_mode->pitch * current_screen->current_video_mode->height);
         }
     }
 }
