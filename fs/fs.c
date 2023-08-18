@@ -16,40 +16,22 @@ uint32_t fs_write(fs_node_t *node, uint32_t offset, uint32_t size, void *buffer)
     return NULL;
 }
 
-void fs_open(fs_node_t *node, uint8_t flags)
+fs_node_t *fs_open(fs_node_t *node, uint8_t *name, uint8_t flags)
 {
+    if (!name || !strlen(name))
+        return (fs_node_t *)NULL;
+    if (*name == '/')
+        node = fs_root, name++;
+    if (!node || !flags || !strlen(name))
+        return (fs_node_t *)NULL;
     if (node->open)
-        return node->open(node, flags);
+        return node->open(node, name, flags);
 }
 
 void fs_close(fs_node_t *node)
 {
+    if (!node)
+        return;
     if (node->close)
         return node->close(node);
-}
-
-fs_dir_t *fs_read_dir(fs_node_t *node, uint8_t *name)
-{
-    if (*name == '/')
-        node = fs_root, name++;
-    if (node == fs_root && strcmp(name, "dev"))
-        return fs_dev;
-    if (node == fs_root && strncmp(name, "dev/", 4))
-        node = fs_dev;
-    if ((node->flags & 0x7) == FS_DIRECTORY && node->read_dir)
-        return node->read_dir(node, name);
-    return (fs_dir_t *)NULL;
-}
-
-fs_node_t *fs_find_dir(fs_node_t *node, uint8_t *name)
-{
-    if (*name == '/')
-        node = fs_root, name++;
-    if (node == fs_root && strcmp(name, "dev"))
-        return fs_dev;
-    if (node == fs_root && strncmp(name, "dev/", 4))
-        node = fs_dev;
-    if ((node->flags & 0x7) == FS_DIRECTORY && node->find_dir)
-        return node->find_dir(node, name);
-    return (fs_node_t *)NULL;
 }
