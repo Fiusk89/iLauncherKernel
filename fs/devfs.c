@@ -2,14 +2,13 @@
 
 fs_node_t *fs_dev;
 
-uint8_t *charmap = "QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm";
+uint8_t *charmap = "0123456789QWERTYUIOPASDFGHJKLZXCVBNMqwertyuiopasdfghjklzxcvbnm";
 
 void devfs_add_dev(fs_node_t *dev, uint8_t *name)
 {
     if (!dev || !name || !strlen(name))
         return;
-    if (!((dev->flags & 0x7) == FS_BLOCKDEVICE || (dev->flags & 0x7) == FS_CHARDEVICE ||
-          (dev->flags & 0x7) == FS_DIRECTORY))
+    if (!((dev->flags & 0x7) == FS_BLOCKDEVICE || (dev->flags & 0x7) == FS_CHARDEVICE))
         return;
     if (strlen(name) > 255 - strlen("dev/"))
         return;
@@ -20,6 +19,11 @@ void devfs_add_dev(fs_node_t *dev, uint8_t *name)
                 pass++;
     if (pass != strlen(name))
         return;
+    uint8_t new_name[4096];
+    memset(new_name, 0, 4096);
+    strcat(new_name, "dev/");
+    strcat(new_name, name);
+    memcpy(dev->name, new_name, strlen(new_name));
     fs_node_t *tmp = fs_dev;
     while (tmp->next)
         tmp = tmp->next;

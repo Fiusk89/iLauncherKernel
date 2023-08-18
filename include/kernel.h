@@ -17,6 +17,7 @@
 #include <io.h>
 #include <fs.h>
 #include <devfs.h>
+#include <ramfs.h>
 #include <gdt.h>
 #include <tss.h>
 #include <idt.h>

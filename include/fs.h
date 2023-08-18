@@ -21,6 +21,7 @@ typedef struct fs_node
     uint32_t flags;
     uint32_t size;
     uint32_t impl;
+    void *buffer;
     uint32_t (*read)(struct fs_node *node, uint32_t offset, uint32_t size, void *buffer);
     uint32_t (*write)(struct fs_node *node, uint32_t offset, uint32_t size, void *buffer);
     struct fs_node *(*open)(struct fs_node *node, uint8_t *name, uint8_t flags);

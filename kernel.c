@@ -91,12 +91,15 @@ void kernel(multiboot_info_t *info)
 {
     clear_screen();
     multiboot_module_t *modules = (multiboot_module_t *)KERNEL_P2V(info->mods_addr);
-    if (info->mods_count)
+    for (uint32_t i = 0; i < info->mods_count; i++)
     {
-        ilrdfs_install(KERNEL_P2V(modules[0].mod_start));
-        placement_address = KERNEL_P2V(modules[0].mod_end);
+        ilrdfs_install(KERNEL_P2V(modules[i].mod_end));
+        if (placement_address < KERNEL_P2V(modules[i].mod_end))
+            placement_address += KERNEL_P2V(modules[i].mod_end) - placement_address;
     }
     multiboot_memory_map_t *memory_map = (multiboot_memory_map_t *)KERNEL_P2V(info->mmap_addr);
+    if (placement_address < KERNEL_P2V(info->mmap_addr + info->mmap_length))
+        placement_address += KERNEL_P2V(info->mmap_addr + info->mmap_length) - placement_address;
     for (uint32_t i = 0; i < info->mmap_length / sizeof(multiboot_memory_map_t); i++)
     {
         if (memory_map[i].type == MULTIBOOT_MEMORY_AVAILABLE && memory_map[i].addr == 0x100000)
@@ -113,6 +116,12 @@ void kernel(multiboot_info_t *info)
     page_install();
     kheap_install();
     devfs_install();
+    fs_node_t *tmp = fs_dev;
+    while (tmp)
+    {
+        kprintf("/%s\n", tmp->name);
+        tmp = tmp->next;
+    }
     pit_install();
     uhci_install();
     syscall_install();
