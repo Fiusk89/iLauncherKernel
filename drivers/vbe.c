@@ -54,7 +54,7 @@ void vbe_set_mode(uint16_t mode)
                                                           sizeof(uint16_t));
         vbe_modes->graphic_framebuffer = (void *)kmalloc(vbe_mode_info->width *
                                                          vbe_mode_info->height *
-                                                         round((float)vbe_mode_info->bpp / 8.0));
+                                                         ((vbe_mode_info->bpp + 1) >> 3));
     }
 }
 
@@ -75,8 +75,8 @@ void *vbe_mode_list()
             continue;
         if (mode_info->memory_model != 4 && mode_info->memory_model != 6)
             continue;
-        for (uint32_t i = mode_info->framebuffer;
-             i < mode_info->framebuffer + mode_info->pitch * mode_info->height;
+        for (uint32_t i = vbe_mode_info->framebuffer;
+             i < vbe_mode_info->framebuffer + vbe_mode_info->pitch * vbe_mode_info->height;
              i += 0x1000)
         {
             page_alloc_frame(kernel_directory, i, i, 0, 0);

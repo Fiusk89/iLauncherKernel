@@ -63,7 +63,7 @@ static void heap_contract(heap_t *heap, uint64_t new_size)
         return;
     if (new_size < 0x1000)
         new_size = 0x1000;
-    for (uint64_t i = new_size + 0x1000; i < heap->end - heap->start; i += 0x1000)
+    for (uint64_t i = new_size; i < heap->end - heap->start; i += 0x1000)
     {
         page_free_frame(kernel_directory, heap->start + i);
     }
@@ -97,8 +97,10 @@ static void heap_expand_free_nodes(heap_t *heap)
             new_size += sizeof(heap_node_t) + heap_node_end->size;
             heap_node_end = heap_node_end->next;
         }
-        if (heap_node->size != new_size)
+        if (heap_node_end)
             heap_node->size = new_size - sizeof(heap_node_t);
+        else
+            heap_node->size = new_size;
         heap_node->align = NULL;
         heap_node->next = heap_node_end;
         if (heap_node_end)
@@ -180,6 +182,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
             if ((uint64_t)new_heap_node + sizeof(heap_node_t) > heap->end)
                 return (void *)NULL;
         }
+        memset(new_heap_node, 0, sizeof(heap_node_t));
         new_heap_node->signature = HEAP_SIGNATURE;
         new_heap_node->is_free = true;
         new_heap_node->size = heap_node->size - size;
