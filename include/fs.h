@@ -9,8 +9,8 @@
 #define FS_PIPE 0x05
 #define FS_SYMLINK 0x06
 #define FS_MOUNTPOINT 0x07
-#define FS_OPEN_READ 0x01
-#define FS_OPEN_WRITE 0x02
+#define FS_OPEN_READ (1 << 4)
+#define FS_OPEN_WRITE (1 << 5)
 
 typedef struct fs_node
 {
@@ -19,7 +19,7 @@ typedef struct fs_node
     uint32_t uid;
     uint32_t gid;
     uint32_t flags;
-    uint32_t size;
+    uint32_t size, offset;
     uint32_t impl;
     void *buffer;
     uint32_t (*read)(struct fs_node *node, uint32_t offset, uint32_t size, void *buffer);

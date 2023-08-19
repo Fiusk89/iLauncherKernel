@@ -91,9 +91,10 @@ void kernel(multiboot_info_t *info)
 {
     clear_screen();
     multiboot_module_t *modules = (multiboot_module_t *)KERNEL_P2V(info->mods_addr);
+    if (placement_address < KERNEL_P2V(info->mods_addr + (sizeof(multiboot_module_t) * info->mods_count)))
+        placement_address += KERNEL_P2V(info->mods_addr + (sizeof(multiboot_module_t) * info->mods_count));
     for (uint32_t i = 0; i < info->mods_count; i++)
     {
-        ilrdfs_install(KERNEL_P2V(modules[i].mod_end));
         if (placement_address < KERNEL_P2V(modules[i].mod_end))
             placement_address += KERNEL_P2V(modules[i].mod_end) - placement_address;
     }
@@ -113,16 +114,12 @@ void kernel(multiboot_info_t *info)
     idt_install();
     isr_install();
     irq_install();
+    pit_install();
     page_install();
     kheap_install();
     devfs_install();
-    fs_node_t *tmp = fs_dev;
-    while (tmp)
-    {
-        kprintf("/%s\n", tmp->name);
-        tmp = tmp->next;
-    }
-    pit_install();
+    for (uint32_t i = 0; i < info->mods_count; i++)
+        ramfs_add((void *)KERNEL_P2V(modules[i].mod_start), (void *)KERNEL_P2V(modules[i].mod_end));
     uhci_install();
     syscall_install();
     keyboard_install();

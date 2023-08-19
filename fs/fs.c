@@ -24,6 +24,14 @@ fs_node_t *fs_open(fs_node_t *node, uint8_t *name, uint8_t flags)
         node = fs_root, name++;
     if (!node || !flags || !strlen(name))
         return (fs_node_t *)NULL;
+    while (node)
+    {
+        if (!strcmp(node->name, name))
+            break;
+        node = node->next;
+    }
+    if (!node)
+        return (fs_node_t *)NULL;
     if (node->open)
         return node->open(node, name, flags);
 }

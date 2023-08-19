@@ -1,7 +1,5 @@
 #include <uhci.h>
 
-extern pit_t pit_delay;
-
 #define MAX_FRAME_LIST 1024
 
 uhci_t *uhci_dev;

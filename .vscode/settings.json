@@ -5,6 +5,7 @@
         "ctype.h": "c",
         "image.h": "c",
         "algorithm": "c",
-        "fs.h": "c"
+        "fs.h": "c",
+        "typeinfo": "c"
     }
 }

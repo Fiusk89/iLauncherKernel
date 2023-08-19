@@ -49,5 +49,5 @@ void devfs_install()
     fs_dev = (fs_node_t *)kmalloc(sizeof(fs_node_t));
     memset(fs_dev, 0, sizeof(fs_node_t));
     strcpy(fs_dev->name, "dev");
-    fs_dev->flags = FS_DIRECTORY;
+    fs_dev->flags = FS_DIRECTORY | FS_OPEN_READ;
 }

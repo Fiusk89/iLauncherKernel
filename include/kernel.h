@@ -12,7 +12,6 @@
 #include <rle.h>
 #include <stdlib.h>
 #include <string.h>
-#include <blend.h>
 #include <math.h>
 #include <io.h>
 #include <fs.h>
@@ -48,7 +47,6 @@
 #include <page.h>
 #include <task.h>
 #include <pci.h>
-#include <image.h>
 #include <ide.h>
 #include <uhci.h>
 
