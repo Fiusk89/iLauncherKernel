@@ -38,7 +38,7 @@ uint32_t page_get_free_frames()
     uint32_t ret = 0;
     for (uint32_t i = 0; i < BIT_INDEX(page_frames_size); i++)
     {
-        for (uint8_t j = 0; j < 63; j++)
+        for (uint8_t j = 0; j < 64; j++)
             if (~page_frames[i] & (1 << j))
                 ret++;
     }
@@ -52,7 +52,7 @@ uint32_t page_get_used_frames()
     uint32_t ret = 0;
     for (uint32_t i = 0; i < BIT_INDEX(page_frames_size); i++)
     {
-        for (uint8_t j = 0; j < 63; j++)
+        for (uint8_t j = 0; j < 64; j++)
             if (page_frames[i] & (1 << j))
                 ret++;
     }
@@ -65,7 +65,7 @@ uint32_t page_find_free_frame()
         return 0xffffffff;
     for (uint32_t i = 0; i < BIT_INDEX(page_frames_size); i++)
     {
-        for (uint8_t j = 0; j < 63; j++)
+        for (uint8_t j = 0; j < 64; j++)
             if (~page_frames[i] & (1 << j))
                 return i * 64 + j;
     }

@@ -9,7 +9,8 @@ heap_t *heap_create(uint32_t v_start, uint32_t p_start, uint64_t end, uint64_t m
     if (end > max)
         return (void *)NULL;
     heap_t *heap = (heap_t *)p_start;
-    v_start += sizeof(heap_t), p_start += sizeof(heap_t);
+    v_start = KERNEL_ALIGN(v_start + sizeof(heap_t), 0x1000);
+    p_start = KERNEL_ALIGN(p_start + sizeof(heap_t), 0x1000);
     heap->start = v_start;
     heap->end = end;
     heap->max = max;
@@ -88,7 +89,6 @@ static void heap_expand_free_nodes(heap_t *heap)
         }
         if (!heap_node)
             return;
-        uint64_t new_size = heap_node->size;
         heap_node_end = heap_node->next;
         while (heap_node_end)
         {
@@ -271,6 +271,6 @@ void heap_mfree(heap_t *heap, void *ptr)
         return;
     node->is_free = true;
     heap_expand_free_nodes(heap);
-    if (!node->next && false)
+    if (!node->next)
         heap_contract(heap, ((uint64_t)node + sizeof(heap_node_t)) - heap->start);
 }

@@ -35,12 +35,12 @@ uint32_t kmalloc_int(uint32_t size, uint16_t align, uint32_t *phys)
 
 void kheap_install()
 {
-    uint64_t aliged_placement_address = KERNEL_ALIGN(placement_address + 0x1000, 0x1000);
-    for (uint64_t i = aliged_placement_address; i < aliged_placement_address + 0x1000; i += 0x1000)
+    uint64_t aliged_placement_address = KERNEL_ALIGN(placement_address, 0x1000);
+    for (uint64_t i = aliged_placement_address; i < aliged_placement_address + 0x2000; i += 0x1000)
     {
         page_alloc_frame(kernel_directory, i, KERNEL_V2P(i), 0, 0);
     }
-    kheap = heap_create(aliged_placement_address, aliged_placement_address, aliged_placement_address + 0x1000, limit(aliged_placement_address + (page_get_free_frames() << 12), 0xffffffff), 0, 0);
+    kheap = heap_create(aliged_placement_address, aliged_placement_address, aliged_placement_address + 0x2000, limit(aliged_placement_address + (page_get_free_frames() << 12), 0xffffffff), 0, 0);
 }
 
 uint32_t kmalloc_a(uint32_t size, uint16_t align)
