@@ -109,9 +109,9 @@ void ramfs_add(void *start, void *end)
         fs_ramdisk = tmp;
     }
     tmp->dev = (fs_node_t *)kmalloc(sizeof(fs_node_t));
-    char number[255 - strlen("ramdisk")];
-    memset(number, 0, 255 - strlen("ramdisk"));
-    itoa(number, tmp->index, 255 - strlen("ramdisk"));
+    char number[255 - sizeof("ramdisk")];
+    memset(number, 0, 255 - sizeof("ramdisk"));
+    itoa(number, tmp->index, 255 - sizeof("ramdisk"));
     memset(tmp->dev, 0, sizeof(fs_node_t));
     strcat(tmp->dev->name, "ramdisk");
     strcat(tmp->dev->name, number);

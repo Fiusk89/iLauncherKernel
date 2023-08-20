@@ -35,6 +35,8 @@ typedef struct page_directory
 
 extern page_directory_t *kernel_directory;
 
+uint32_t page_get_free_frames();
+uint32_t page_get_used_frames();
 void page_enable();
 void page_install();
 void switch_page_directory(page_directory_t *new);

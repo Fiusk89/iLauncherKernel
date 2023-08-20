@@ -94,13 +94,9 @@ static void heap_expand_free_nodes(heap_t *heap)
         {
             if (!heap_node_end->is_free)
                 break;
-            new_size += sizeof(heap_node_t) + heap_node_end->size;
+            heap_node->size += heap_node_end->size;
             heap_node_end = heap_node_end->next;
         }
-        if (heap_node_end)
-            heap_node->size = new_size - sizeof(heap_node_t);
-        else
-            heap_node->size = new_size;
         heap_node->align = NULL;
         heap_node->next = heap_node_end;
         if (heap_node_end)
@@ -154,12 +150,15 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
     size += sizeof(uint64_t);
     uint64_t full_size = sizeof(heap_node_t) * 3 + size;
     heap_node_t *heap_node = (heap_node_t *)heap->start;
-    while (heap_node->next)
+    heap_expand_free_nodes(heap);
+    while (heap_node)
     {
         if (heap_node->size >= size && heap_node->is_free)
             break;
         heap_node = heap_node->next;
     }
+    if (!heap_node)
+        return (void *)NULL;
     if (heap_node->size == size)
     {
         uint64_t address = NULL;
@@ -272,6 +271,6 @@ void heap_mfree(heap_t *heap, void *ptr)
         return;
     node->is_free = true;
     heap_expand_free_nodes(heap);
-    if (!node->next)
+    if (!node->next && false)
         heap_contract(heap, ((uint64_t)node + sizeof(heap_node_t)) - heap->start);
 }
