@@ -19,8 +19,8 @@ void devfs_add_dev(fs_node_t *dev, uint8_t *name)
                 pass++;
     if (pass != strlen(name))
         return;
-    uint8_t new_name[4096];
-    memset(new_name, 0, 4096);
+    uint8_t new_name[sizeof(dev->name)];
+    memset(new_name, 0, sizeof(dev->name) - 1);
     strcat(new_name, "dev/");
     strcat(new_name, name);
     memcpy(dev->name, new_name, strlen(new_name));

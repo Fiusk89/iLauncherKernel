@@ -27,7 +27,9 @@ uint32_t ramfs_read(fs_node_t *node, uint32_t offset, uint32_t size, void *buffe
     }
     if (tmp)
     {
-        memcpy(buffer, tmp->ramdisk_start + offset, limit(size, node->ptr->size));
+        if (tmp->dev->size < offset)
+            return 4;
+        memcpy(buffer, tmp->ramdisk_start + offset, limit(size, node->ptr->size - offset));
         return 0;
     }
     return 1;

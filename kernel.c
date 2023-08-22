@@ -69,9 +69,9 @@ uint8_t chr[0] = {
 void loop()
 {
     char key = NULL;
-    kprintf("USED MEMORY: %uMB;\nFREE MEMORY: %uMB;\n",
-            (uint32_t)heap_get_used_size(kheap) / (uint32_t)MB,
-            (uint32_t)heap_get_free_size(kheap) / (uint32_t)MB);
+    kprintf("USED MEMORY: %fMB;\nFREE MEMORY: %fMB;\n",
+            (float)heap_get_used_size(kheap) / (float)MB,
+            (float)heap_get_free_size(kheap) / (float)MB);
     while (true)
     {
         key = keyboard_get_key();
@@ -86,6 +86,8 @@ void loop()
             dos_print_char(key, 0x0f, 0x00);
     }
 }
+
+fs_node_t *ilfs_create(fs_node_t *dev);
 
 void kernel(multiboot_info_t *info)
 {
@@ -120,6 +122,7 @@ void kernel(multiboot_info_t *info)
     devfs_install();
     for (uint32_t i = 0; i < info->mods_count; i++)
         ramfs_add((void *)KERNEL_P2V(modules[i].mod_start), (void *)KERNEL_P2V(modules[i].mod_end));
+    fs_root = ilfs_create(fs_dev->next);
     uhci_install();
     syscall_install();
     keyboard_install();
