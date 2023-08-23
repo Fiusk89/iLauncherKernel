@@ -10,8 +10,6 @@ void devfs_add_dev(fs_node_t *dev, uint8_t *name)
         return;
     if (!((dev->flags & 0x7) == FS_BLOCKDEVICE || (dev->flags & 0x7) == FS_CHARDEVICE))
         return;
-    if (strlen(name) > 255 - strlen("dev/"))
-        return;
     uint32_t pass = 0;
     for (uint32_t i = 0; name[i] != '\0'; i++)
         for (uint8_t charmap_i = 0; charmap[charmap_i] != '\0'; charmap_i++)
@@ -19,16 +17,22 @@ void devfs_add_dev(fs_node_t *dev, uint8_t *name)
                 pass++;
     if (pass != strlen(name))
         return;
-    uint8_t new_name[sizeof(dev->name)];
-    memset(new_name, 0, sizeof(dev->name) - 1);
-    strcat(new_name, "dev/");
-    strcat(new_name, name);
-    memcpy(dev->name, new_name, strlen(new_name));
-    fs_node_t *tmp = fs_dev;
-    while (tmp->next)
-        tmp = tmp->next;
-    dev->prev = tmp;
-    tmp->next = dev;
+    fs_node_t *tmp = fs_dev->ptr;
+    if (tmp)
+    {
+        while (tmp->next)
+            tmp = tmp->next;
+        dev->parent = fs_dev;
+        dev->prev = tmp;
+        tmp->next = dev;
+    }
+    else
+    {
+        fs_dev->ptr = dev;
+        dev->prev = (fs_node_t *)NULL;
+        dev->next = (fs_node_t *)NULL;
+        dev->parent = fs_dev;
+    }
 }
 
 void devfs_remove_dev(fs_node_t *dev)

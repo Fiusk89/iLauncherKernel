@@ -2,6 +2,49 @@
 
 fs_node_t *fs_root;
 
+static inline uint32_t fs_cutdir(char *name)
+{
+    uint32_t i = 0;
+    while (name[i])
+    {
+        if (name[i] == '/')
+        {
+            i++;
+            break;
+        }
+        i++;
+    }
+    return i;
+}
+
+static inline void fs_cut_slashes(char *name)
+{
+    for (uint32_t i = 0; name[i]; i++)
+    {
+        for (uint32_t j = i + 1; name[j]; j++)
+        {
+            if (name[i] == '/' && name[j] == '/')
+            {
+                for (uint32_t k = j; name[k]; k++)
+                {
+                    name[k] = name[k + 1];
+                }
+                j = i;
+            }
+        }
+    }
+}
+
+static inline bool fs_contains_slash(char *name)
+{
+    for (uint32_t i = 0; name[i]; i++)
+    {
+        if (name[i] == '/' && name[i + 1])
+            return 1;
+    }
+    return 0;
+}
+
 uint32_t fs_read(fs_node_t *node, uint32_t offset, uint32_t size, void *buffer)
 {
     if (node->read)
@@ -24,11 +67,22 @@ fs_node_t *fs_open(fs_node_t *node, uint8_t *name, uint8_t flags)
         node = fs_root, name++;
     if (!node || !flags || !strlen(name))
         return (fs_node_t *)NULL;
-    while (node)
+    fs_cut_slashes(name);
+    if ((node->flags & 0x7) == FS_DIRECTORY)
     {
-        if (!strcmp(node->name, name))
-            break;
-        node = node->next;
+        uint8_t *tmp1 = name;
+        node = node->ptr;
+        while (node)
+        {
+            if ((node->flags & 0x7) == FS_DIRECTORY)
+                if (!strncmp(name, node->name, strlen(node->name) - 1))
+                    node = node->ptr, tmp1 += fs_cutdir(tmp1);
+            if (!fs_contains_slash(tmp1))
+                if (!strncmp(name, node->name, strlen(node->name) - 1))
+                    break;
+            tmp1 += fs_cutdir(tmp1);
+            node = node->next;
+        }
     }
     if (!node)
         return (fs_node_t *)NULL;

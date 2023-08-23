@@ -14,19 +14,21 @@
 
 typedef struct fs_node
 {
-    uint8_t name[4096];
+    uint8_t name[256];
     uint32_t mask;
     uint32_t uid;
     uint32_t gid;
     uint32_t flags;
-    uint32_t size, offset;
-    uint32_t impl;
+    uint32_t size;
+    uint32_t bsize, boffset;
     void *buffer;
+    uint32_t impl;
     uint32_t (*read)(struct fs_node *node, uint32_t offset, uint32_t size, void *buffer);
     uint32_t (*write)(struct fs_node *node, uint32_t offset, uint32_t size, void *buffer);
     struct fs_node *(*open)(struct fs_node *node, uint8_t *name, uint8_t flags);
     void (*close)(struct fs_node *node);
     struct fs_node *ptr;
+    struct fs_node *parent;
     struct fs_node *prev;
     struct fs_node *next;
 } fs_node_t;

@@ -122,7 +122,7 @@ void kernel(multiboot_info_t *info)
     devfs_install();
     for (uint32_t i = 0; i < info->mods_count; i++)
         ramfs_add((void *)KERNEL_P2V(modules[i].mod_start), (void *)KERNEL_P2V(modules[i].mod_end));
-    fs_root = ilfs_create(fs_dev->next);
+    // fs_root = ilfs_create(fs_dev->next);
     uhci_install();
     syscall_install();
     keyboard_install();

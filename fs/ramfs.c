@@ -50,8 +50,8 @@ uint32_t ramfs_write(fs_node_t *node, uint32_t offset, uint32_t size, void *buff
     }
     if (tmp)
     {
-        node->offset = offset;
-        node->size = size;
+        node->boffset = offset;
+        node->bsize = size;
         node->buffer = buffer;
         return 0;
     }
@@ -82,7 +82,7 @@ void ramfs_close(fs_node_t *node)
             tmp = tmp->next;
         }
         if (tmp)
-            memcpy(tmp->ramdisk_start + node->offset, node->buffer, node->size);
+            memcpy(tmp->ramdisk_start + node->boffset, node->buffer, node->bsize);
     }
     kfree(node);
 }
@@ -111,10 +111,10 @@ void ramfs_add(void *start, void *end)
         fs_ramdisk = tmp;
     }
     tmp->dev = (fs_node_t *)kmalloc(sizeof(fs_node_t));
+    memset(tmp->dev, 0, sizeof(fs_node_t));
     char number[255 - sizeof("ramdisk")];
     memset(number, 0, 255 - sizeof("ramdisk"));
     itoa(number, tmp->index, 255 - sizeof("ramdisk"));
-    memset(tmp->dev, 0, sizeof(fs_node_t));
     strcat(tmp->dev->name, "ramdisk");
     strcat(tmp->dev->name, number);
     tmp->dev->open = ramfs_open;
