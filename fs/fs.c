@@ -2,22 +2,19 @@
 
 fs_node_t *fs_root;
 
-static inline uint32_t fs_cutdir(char *name)
+uint32_t fs_cutdir(char *name)
 {
     uint32_t i = 0;
     while (name[i])
     {
         if (name[i] == '/')
-        {
-            i++;
             break;
-        }
         i++;
     }
-    return i;
+    return i + 1;
 }
 
-static inline void fs_cut_slashes(char *name)
+void fs_cut_slashes(char *name)
 {
     for (uint32_t i = 0; name[i]; i++)
     {
@@ -35,7 +32,7 @@ static inline void fs_cut_slashes(char *name)
     }
 }
 
-static inline bool fs_contains_slash(char *name)
+bool fs_contains_slash(char *name)
 {
     for (uint32_t i = 0; name[i]; i++)
     {
@@ -43,6 +40,18 @@ static inline bool fs_contains_slash(char *name)
             return 1;
     }
     return 0;
+}
+
+uint32_t fs_count_slashes(char *name)
+{
+    uint32_t i = 0, j = 0;
+    while (name[i])
+    {
+        if (name[i] == '/')
+            j++;
+        i++;
+    }
+    return j;
 }
 
 uint32_t fs_read(fs_node_t *node, uint32_t offset, uint32_t size, void *buffer)
@@ -61,15 +70,15 @@ uint32_t fs_write(fs_node_t *node, uint32_t offset, uint32_t size, void *buffer)
 
 fs_node_t *fs_open(fs_node_t *node, uint8_t *name, uint8_t flags)
 {
-    if (!name || !strlen(name))
-        return (fs_node_t *)NULL;
-    if (*name == '/')
-        node = fs_root, name++;
-    if (!node || !flags || !strlen(name))
-        return (fs_node_t *)NULL;
-    fs_cut_slashes(name);
     if ((node->flags & 0x7) == FS_DIRECTORY)
     {
+        if (!name || !strlen(name))
+            return (fs_node_t *)NULL;
+        if (*name == '/')
+            node = fs_root, name++;
+        if (!node || !flags || !strlen(name))
+            return (fs_node_t *)NULL;
+        fs_cut_slashes(name);
         uint8_t *tmp1 = name;
         node = node->ptr;
         while (node)
@@ -87,7 +96,7 @@ fs_node_t *fs_open(fs_node_t *node, uint8_t *name, uint8_t flags)
     if (!node)
         return (fs_node_t *)NULL;
     if (node->open)
-        return node->open(node, name, flags);
+        return node->open(node, flags);
 }
 
 void fs_close(fs_node_t *node)

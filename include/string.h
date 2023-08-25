@@ -8,7 +8,7 @@ void reverse(char *s);
 void *memcpy(void *dest, void *src, uint32_t size);
 void *memset(void *dest, uint8_t val, uint32_t size);
 bool strcmp(char *str1, char *str2);
-bool strncmp(const char *s1, const char *s2, unsigned int n);
+bool strncmp(char *str1, char *str2, uint32_t n);
 char *strcpy(char *str1, char *str2);
 char *strcat(char *dest, const char *src);
 char *strncat(char *dest, const char *src, size_t num);

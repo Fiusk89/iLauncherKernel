@@ -102,11 +102,11 @@ int32_t acpi_get_irq_src(uint8_t irq)
     return -1;
 }
 
-void acpi_install()
+void acpi_install(uint32_t start, uint32_t end)
 {
     acpi_rsdp_descriptor_t *rsdp;
     acpi_sdt_header_t *sdt;
-    for (uint32_t ptr = 0xe0000; ptr < 0xfffff; ptr += 16)
+    for (uint32_t ptr = start; ptr < end; ptr += 16)
     {
         if (!strncmp((int8_t *)ptr, "RSD PTR ", 8))
         {

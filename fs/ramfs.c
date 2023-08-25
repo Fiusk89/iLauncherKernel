@@ -58,7 +58,7 @@ uint32_t ramfs_write(fs_node_t *node, uint32_t offset, uint32_t size, void *buff
     return 1;
 }
 
-fs_node_t *ramfs_open(fs_node_t *node, uint8_t *name, uint8_t flags)
+fs_node_t *ramfs_open(fs_node_t *node, uint8_t flags)
 {
     if (!node)
         return (fs_node_t *)NULL;

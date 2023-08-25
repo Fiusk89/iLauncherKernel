@@ -77,6 +77,8 @@ void loop()
         key = keyboard_get_key();
         if (key == '=')
             reboot();
+        if (key == '+')
+            poweroff();
         if (key == '\b')
         {
             remove_last_char();
@@ -122,7 +124,7 @@ void kernel(multiboot_info_t *info)
     devfs_install();
     for (uint32_t i = 0; i < info->mods_count; i++)
         ramfs_add((void *)KERNEL_P2V(modules[i].mod_start), (void *)KERNEL_P2V(modules[i].mod_end));
-    // fs_root = ilfs_create(fs_dev->next);
+    fs_root = ilfs_create(fs_dev->ptr);
     uhci_install();
     syscall_install();
     keyboard_install();
@@ -130,7 +132,7 @@ void kernel(multiboot_info_t *info)
     cpuid_install();
     fpu_install();
     bios32_install();
-    acpi_install();
+    acpi_install(0xe0000, 0x100000);
     vga_install();
     vbe_install();
     task_install();

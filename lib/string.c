@@ -8,23 +8,17 @@ uint32_t strlen(char *str)
     return len;
 }
 
-bool strncmp(const char *s1, const char *s2, unsigned int n)
+bool strncmp(char *s1, char *s2, uint32_t n)
 {
-    if (n == 0)
-    {
+    if (!n)
         return true;
-    }
-    do
+    for (uint32_t i = 0; i < n; i++)
     {
-        if (*s1 != *s2++)
-        {
+        if (!s1[i] || !s2[i])
             return true;
-        }
-        if (*s1++ == 0)
-        {
-            break;
-        }
-    } while (--n != 0);
+        if (s1[i] != s2[i])
+            return true;
+    }
     return false;
 }
 

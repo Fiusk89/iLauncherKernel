@@ -132,7 +132,7 @@ typedef struct FADT
 extern uint8_t acpi_cpu_id[ACPI_MAX_CPU];
 extern uint8_t acpi_cpu_cores;
 
-void acpi_install();
+void acpi_install(uint32_t start, uint32_t end);
 int32_t acpi_get_irq(uint8_t irq);
 int32_t acpi_get_irq_src(uint8_t irq);
 bool acpi_shutdown();
