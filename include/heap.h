@@ -22,7 +22,7 @@ typedef struct heap_node
     struct heap_node *next;
 } heap_node_t;
 
-heap_t *heap_create(uint32_t v_start, uint32_t p_start, uint64_t end, uint64_t max, uint8_t is_kernel, uint8_t is_writable);
+heap_t *heap_create(uint64_t v_start, uint64_t p_start, uint64_t end, uint64_t max, uint8_t is_kernel, uint8_t is_writable);
 void heap_show_all_nodes(heap_t *heap);
 uint64_t heap_get_free_size(heap_t *heap);
 uint64_t heap_get_used_size(heap_t *heap);

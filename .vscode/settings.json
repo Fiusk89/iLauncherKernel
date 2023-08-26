@@ -1,6 +1,7 @@
 {
     "files.associations": {
         "typeinfo": "c",
-        "random": "c"
+        "random": "c",
+        "heap.h": "c"
     }
 }

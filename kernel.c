@@ -92,14 +92,6 @@ void loop()
 void kernel(multiboot_info_t *info)
 {
     clear_screen();
-    multiboot_module_t *modules = (multiboot_module_t *)KERNEL_P2V(info->mods_addr);
-    if (placement_address < KERNEL_P2V(info->mods_addr + (sizeof(multiboot_module_t) * info->mods_count)))
-        placement_address += KERNEL_P2V(info->mods_addr + (sizeof(multiboot_module_t) * info->mods_count));
-    for (uint32_t i = 0; i < info->mods_count; i++)
-    {
-        if (placement_address < KERNEL_P2V(modules[i].mod_end))
-            placement_address += KERNEL_P2V(modules[i].mod_end) - placement_address;
-    }
     multiboot_memory_map_t *memory_map = (multiboot_memory_map_t *)KERNEL_P2V(info->mmap_addr);
     if (placement_address < KERNEL_P2V(info->mmap_addr + info->mmap_length))
         placement_address += KERNEL_P2V(info->mmap_addr + info->mmap_length) - placement_address;
@@ -111,6 +103,14 @@ void kernel(multiboot_info_t *info)
             mm_length = memory_map[i].len;
             break;
         }
+    }
+    multiboot_module_t *modules = (multiboot_module_t *)KERNEL_P2V(info->mods_addr);
+    if (placement_address < KERNEL_P2V(info->mods_addr + (sizeof(multiboot_module_t) * info->mods_count)))
+        placement_address += KERNEL_P2V(info->mods_addr + (sizeof(multiboot_module_t) * info->mods_count));
+    for (uint32_t i = 0; i < info->mods_count; i++)
+    {
+        if (placement_address < KERNEL_P2V(modules[i].mod_end))
+            placement_address += KERNEL_P2V(modules[i].mod_end) - placement_address;
     }
     gdt_install();
     idt_install();

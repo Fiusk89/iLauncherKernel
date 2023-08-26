@@ -63,7 +63,8 @@ fs_node_t *ramfs_open(fs_node_t *node, uint8_t flags)
     if (!node)
         return (fs_node_t *)NULL;
     fs_node_t *ret = (fs_node_t *)kclone(node);
-    ret->flags |= flags;
+    if (flags)
+        ret->flags |= flags;
     ret->ptr = node;
     return ret;
 }

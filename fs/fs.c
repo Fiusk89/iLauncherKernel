@@ -74,7 +74,7 @@ fs_node_t *fs_open(fs_node_t *node, uint8_t *name, uint8_t flags)
         return (fs_node_t *)NULL;
     if (*name == '/')
         node = fs_root, name++;
-    if (!node || !flags)
+    if (!node)
         return (fs_node_t *)NULL;
     fs_cut_slashes(name);
     if ((node->flags & 0x7) == FS_DIRECTORY)
@@ -84,11 +84,11 @@ fs_node_t *fs_open(fs_node_t *node, uint8_t *name, uint8_t flags)
         while (node)
         {
             if (!fs_contains_slash(tmp1) && (node->flags & 0x7) != FS_DIRECTORY)
-                if (!strncmp(tmp1, node->name, strlen(node->name) - 1))
+                if (!strncmp(tmp1, node->name, fs_cutdir(tmp1) - 1))
                     break;
             if ((node->flags & 0x7) == FS_DIRECTORY)
             {
-                if (!strncmp(tmp1, node->name, strlen(node->name) - 1))
+                if (!strncmp(tmp1, node->name, fs_cutdir(tmp1) - 1))
                 {
                     node = node->ptr, tmp1 += fs_cutdir(tmp1);
                     continue;

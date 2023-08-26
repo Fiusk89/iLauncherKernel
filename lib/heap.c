@@ -1,16 +1,15 @@
 #include <heap.h>
 
-heap_t *heap_create(uint32_t v_start, uint32_t p_start, uint64_t end, uint64_t max, uint8_t is_kernel, uint8_t is_writable)
+heap_t *heap_create(uint64_t v_start, uint64_t p_start, uint64_t end, uint64_t max, uint8_t is_kernel, uint8_t is_writable)
 {
-    if (KERNEL_ALIGN(v_start + sizeof(heap_t), 0x1000) + sizeof(heap_node_t) >= end)
+    if (v_start + 0x1000 + sizeof(heap_node_t) >= end)
         return (void *)NULL;
-    if (KERNEL_ALIGN(v_start + sizeof(heap_t), 0x1000) + sizeof(heap_node_t) >= max)
+    if (v_start + 0x1000 + sizeof(heap_node_t) >= max)
         return (void *)NULL;
     if (end > max)
         return (void *)NULL;
     heap_t *heap = (heap_t *)p_start;
-    v_start = KERNEL_ALIGN(v_start + sizeof(heap_t), 0x1000);
-    p_start = KERNEL_ALIGN(p_start + sizeof(heap_t), 0x1000);
+    v_start += 0x1000, p_start += 0x1000;
     heap->start = v_start;
     heap->end = end;
     heap->max = max;
