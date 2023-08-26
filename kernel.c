@@ -89,8 +89,6 @@ void loop()
     }
 }
 
-fs_node_t *ilfs_create(fs_node_t *dev);
-
 void kernel(multiboot_info_t *info)
 {
     clear_screen();
@@ -124,7 +122,7 @@ void kernel(multiboot_info_t *info)
     devfs_install();
     for (uint32_t i = 0; i < info->mods_count; i++)
         ramfs_add((void *)KERNEL_P2V(modules[i].mod_start), (void *)KERNEL_P2V(modules[i].mod_end));
-    fs_root = ilfs_create(fs_dev->ptr);
+    fs_root = ilfs_create("ramdisk0");
     uhci_install();
     syscall_install();
     keyboard_install();

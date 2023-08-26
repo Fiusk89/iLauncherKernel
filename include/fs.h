@@ -14,13 +14,13 @@
 
 typedef struct fs_node
 {
-    uint8_t name[256];
+    uint8_t name[256], dev[4096];
     uint32_t inode;
     uint32_t mask;
     uint32_t uid;
     uint32_t gid;
     uint32_t flags;
-    uint32_t size;
+    uint32_t size, offset;
     uint32_t bsize, boffset;
     void *buffer;
     uint32_t impl;

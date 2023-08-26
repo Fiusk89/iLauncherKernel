@@ -36,6 +36,10 @@ static inline void *ilfs_skip_node_header(ilfs_node_t *node)
     return (void *)((uint64_t)node + sizeof(ilfs_node_t));
 }
 
+#ifdef KERNEL_H
+struct fs_node *ilfs_create(uint8_t *dev);
+#endif
+
 #ifndef KERNEL_H
 
 static uint64_t ilfs_get_free_node(uint8_t *ptr)
