@@ -5,15 +5,12 @@ bool pit_beep = false;
 
 void pit_handler(register_t *r)
 {
+    if (pit_delay)
+        pit_delay--;
     if (current_task)
     {
         current_task->active_time++;
         schedule();
-    }
-    else
-    {
-        if (pit_delay)
-            pit_delay--;
     }
 }
 

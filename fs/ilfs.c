@@ -1,6 +1,21 @@
 #include <kernel.h>
 
-fs_node_t *ilfs_list;
+fs_node_t *ilfs_dev;
+fs_node_t *ilfs_dir;
+
+fs_node_t *ilfs_open(fs_node_t *node, uint8_t flags)
+{
+    if (!node)
+        return (fs_node_t *)NULL;
+    fs_node_t *ret = (fs_node_t *)kclone(node);
+    ret->flags |= flags;
+    return ret;
+}
+
+void ilfs_close(fs_node_t *node)
+{
+    kfree(node);
+}
 
 uint32_t ilfs_add_nodes(fs_node_t *list, fs_node_t *dev, char *cut_name, uint32_t offset)
 {
@@ -14,8 +29,18 @@ uint32_t ilfs_add_nodes(fs_node_t *list, fs_node_t *dev, char *cut_name, uint32_
         if (!node->name[0] || (strlen(cut_name) &&
                                strncmp(node->name, cut_name, strlen(cut_name) - 1)))
         {
-            kfree(list->next);
-            list->next = (fs_node_t *)NULL;
+            if (list->prev)
+            {
+                list = list->prev;
+                kfree(list->next);
+                list->next = (fs_node_t *)NULL;
+            }
+            else if (list->parent && !list->prev)
+            {
+                list = list->parent;
+                kfree(list->ptr);
+                list->ptr = (fs_node_t *)NULL;
+            }
             break;
         }
         offset += sizeof(ilfs_node_t) + node->size;
@@ -59,10 +84,10 @@ fs_node_t *ilfs_create(fs_node_t *dev)
     if (!dev)
         return (fs_node_t *)NULL;
     uint32_t index = 0;
-    while (ilfs_list)
+    while (ilfs_dir)
     {
         index++;
-        ilfs_list = ilfs_list->next;
+        ilfs_dir = ilfs_dir->next;
     }
     fs_node_t *ret = (fs_node_t *)kmalloc(sizeof(fs_node_t));
     memset(ret, 0, sizeof(fs_node_t));

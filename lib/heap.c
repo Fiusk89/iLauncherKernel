@@ -42,7 +42,7 @@ void heap_show_all_nodes(heap_t *heap)
 static void heap_expand(heap_t *heap, uint64_t new_size)
 {
     new_size = KERNEL_ALIGN(new_size, 0x1000);
-    if (!heap || !new_size)
+    if (!heap)
         return;
     if (new_size < heap->end - heap->start || new_size > heap->max - heap->start)
         return;
@@ -56,7 +56,7 @@ static void heap_expand(heap_t *heap, uint64_t new_size)
 static void heap_contract(heap_t *heap, uint64_t new_size)
 {
     new_size = KERNEL_ALIGN(new_size, 0x1000);
-    if (!heap || !new_size)
+    if (!heap)
         return;
     if (new_size > heap->end - heap->start)
         return;
@@ -152,7 +152,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
     {
         if (heap_node->size >= size && heap_node->is_free)
         {
-            if (heap_node->size - size > sizeof(heap_node_t) + 256)
+            if (heap_node->size - size >= size)
                 break;
         }
         else if (heap_node->size == size && heap_node->is_free)
@@ -177,16 +177,16 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
     {
         uint64_t address = NULL;
         heap_node_t *new_heap_node = (heap_node_t *)((uint64_t)heap_node + (full_size - sizeof(heap_node_t)));
-        if ((uint64_t)new_heap_node + sizeof(heap_node_t) > heap->end)
+        if ((uint64_t)heap_node + full_size > heap->end)
         {
-            heap_expand(heap, ((uint64_t)new_heap_node + sizeof(heap_node_t)) - heap->start);
-            if ((uint64_t)new_heap_node + sizeof(heap_node_t) > heap->end)
+            heap_expand(heap, ((uint64_t)heap_node + full_size) - heap->start);
+            if ((uint64_t)heap_node + full_size > heap->end)
                 return (void *)NULL;
         }
         memset(new_heap_node, 0, sizeof(heap_node_t));
         new_heap_node->signature = HEAP_SIGNATURE;
         new_heap_node->is_free = true;
-        new_heap_node->size = heap_node->size - size;
+        new_heap_node->size = heap_node->size - (full_size - sizeof(heap_node_t));
         new_heap_node->prev = heap_node;
         new_heap_node->next = heap_node->next;
         heap_node->signature = HEAP_SIGNATURE;
