@@ -2,9 +2,9 @@
 
 heap_t *heap_create(uint32_t v_start, uint32_t p_start, uint64_t end, uint64_t max, uint8_t is_kernel, uint8_t is_writable)
 {
-    if (v_start + sizeof(heap_t) + sizeof(heap_node_t) > end)
+    if (v_start + sizeof(heap_t) + sizeof(heap_node_t) >= end)
         return (void *)NULL;
-    if (v_start + sizeof(heap_t) + sizeof(heap_node_t) > max)
+    if (v_start + sizeof(heap_t) + sizeof(heap_node_t) >= max)
         return (void *)NULL;
     if (end > max)
         return (void *)NULL;
@@ -17,12 +17,10 @@ heap_t *heap_create(uint32_t v_start, uint32_t p_start, uint64_t end, uint64_t m
     heap->is_kernel = is_kernel;
     heap->is_writable = is_writable;
     heap_node_t *heap_node = (heap_node_t *)p_start;
+    memset(heap_node, 0, sizeof(heap_node_t));
     heap_node->signature = HEAP_SIGNATURE;
     heap_node->is_free = true;
     heap_node->size = heap->max - heap->start;
-    heap_node->align = NULL;
-    heap_node->prev = (heap_node_t *)NULL;
-    heap_node->next = (heap_node_t *)NULL;
     return heap;
 }
 
@@ -97,7 +95,6 @@ static void heap_expand_free_nodes(heap_t *heap)
             heap_node->size += heap_node_end->size;
             heap_node_end = heap_node_end->next;
         }
-        heap_node->align = NULL;
         heap_node->next = heap_node_end;
         if (heap_node_end)
             heap_node_end->prev = heap_node;
@@ -148,17 +145,22 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
     if (align)
         size = KERNEL_ALIGN(size + align, align);
     size += sizeof(uint64_t);
-    uint64_t full_size = sizeof(heap_node_t) * 3 + size;
+    uint64_t full_size = sizeof(heap_node_t) * 2 + size;
     heap_node_t *heap_node = (heap_node_t *)heap->start;
     heap_expand_free_nodes(heap);
-    while (heap_node)
+    while (heap_node->next)
     {
         if (heap_node->size >= size && heap_node->is_free)
+        {
+            if (heap_node->size - size > sizeof(heap_node_t) + 256)
+                break;
+        }
+        else if (heap_node->size == size && heap_node->is_free)
+        {
             break;
+        }
         heap_node = heap_node->next;
     }
-    if (!heap_node)
-        return (void *)NULL;
     if (heap_node->size == size)
     {
         uint64_t address = NULL;
@@ -266,11 +268,15 @@ void heap_mfree(heap_t *heap, void *ptr)
 {
     if (!heap || !ptr)
         return;
+    if ((uint64_t)ptr > heap->end)
+        return;
     heap_node_t *node = (heap_node_t *)(*(uint64_t *)((uint64_t)ptr - sizeof(uint64_t)));
-    if (node->signature != HEAP_SIGNATURE)
+    if (node->signature != HEAP_SIGNATURE || !node->size)
         return;
     node->is_free = true;
     heap_expand_free_nodes(heap);
-    if (!node->next)
-        heap_contract(heap, ((uint64_t)node + sizeof(heap_node_t)) - heap->start);
+    node = (heap_node_t *)heap->start;
+    while (node->next)
+        node = node->next;
+    heap_contract(heap, ((uint64_t)node + sizeof(heap_node_t)) - heap->end);
 }

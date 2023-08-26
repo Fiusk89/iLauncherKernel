@@ -5,14 +5,14 @@ fs_node_t *ilfs_list;
 uint32_t ilfs_add_nodes(fs_node_t *list, fs_node_t *dev, char *cut_name, uint32_t offset)
 {
     ilfs_node_t *node = (ilfs_node_t *)kmalloc(sizeof(ilfs_node_t));
-    memset(node, 0, sizeof(fs_node_t));
+    memset(node, 0, sizeof(ilfs_node_t));
     while (list)
     {
         fs_node_t *tmpfs_node = fs_open(fs_dev, dev->name, FS_OPEN_READ);
         fs_read(tmpfs_node, offset, sizeof(ilfs_node_t), node);
         fs_close(tmpfs_node);
-        if (!node->name[0] || (strlen(node->name) &&
-                               strncmp(node->name, cut_name, limit(strlen(node->name), strlen(cut_name)) - 1)))
+        if (!node->name[0] || (strlen(cut_name) &&
+                               strncmp(node->name, cut_name, strlen(cut_name) - 1)))
         {
             kfree(list->next);
             list->next = (fs_node_t *)NULL;
@@ -36,7 +36,7 @@ uint32_t ilfs_add_nodes(fs_node_t *list, fs_node_t *dev, char *cut_name, uint32_
         default:
             break;
         }
-        list->next = (ilfs_node_t *)kmalloc(sizeof(ilfs_node_t));
+        list->next = (fs_node_t *)kmalloc(sizeof(fs_node_t));
         memset(list->next, 0, sizeof(fs_node_t));
         list->next->prev = list;
         list = list->next;
