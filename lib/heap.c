@@ -2,9 +2,9 @@
 
 heap_t *heap_create(uint32_t v_start, uint32_t p_start, uint64_t end, uint64_t max, uint8_t is_kernel, uint8_t is_writable)
 {
-    if (v_start + sizeof(heap_t) + sizeof(heap_node_t) >= end)
+    if (KERNEL_ALIGN(v_start + sizeof(heap_t), 0x1000) + sizeof(heap_node_t) >= end)
         return (void *)NULL;
-    if (v_start + sizeof(heap_t) + sizeof(heap_node_t) >= max)
+    if (KERNEL_ALIGN(v_start + sizeof(heap_t), 0x1000) + sizeof(heap_node_t) >= max)
         return (void *)NULL;
     if (end > max)
         return (void *)NULL;

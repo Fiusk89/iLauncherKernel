@@ -4,7 +4,7 @@
 #define KERNEL_BASE_ADDRESS 0xC0000000
 #define KERNEL_V2P(a) ((uint32_t)(a) & ~KERNEL_BASE_ADDRESS)
 #define KERNEL_P2V(a) ((uint32_t)(a) | KERNEL_BASE_ADDRESS)
-#define KERNEL_ALIGN(address, align) (align) > 1 ? ((address) + ((align)-1) & ~((align)-1)) : (address)
+#define KERNEL_ALIGN(address, align) (((address) & ((align)-1)) ? ((address) + ((align)-1) & ~((align)-1)) : (address))
 #define RGB2GRAY(c) (((((c) >> 16) & 0xff) + (((c) >> 8) & 0xff) + ((c)&0xff)) / 3)
 #include <ctype.h>
 #include <multiboot.h>
