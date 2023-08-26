@@ -98,8 +98,10 @@ fs_node_t *ilfs_list_nodes(fs_node_t *list)
 
 fs_node_t *ilfs_create(uint8_t *dev)
 {
-    if (!dev)
+    fs_node_t *test = fs_open(fs_dev, dev, NULL);
+    if (!test)
         return (fs_node_t *)NULL;
+    fs_close(test);
     uint32_t index = 0;
     while (ilfs_dir)
     {
