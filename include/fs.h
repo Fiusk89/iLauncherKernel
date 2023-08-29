@@ -28,7 +28,7 @@ typedef struct fs_node
     uint32_t (*write)(struct fs_node *node, uint32_t offset, uint32_t size, void *buffer);
     struct fs_node *(*open)(struct fs_node *node, uint8_t flags);
     void (*close)(struct fs_node *node);
-    struct fs_node *ptr;
+    struct fs_node *ptr, *ptr_old;
     struct fs_node *parent;
     struct fs_node *prev;
     struct fs_node *next;
@@ -44,6 +44,8 @@ typedef struct fs_dir
 
 extern fs_node_t *fs_root;
 
+void fs_mount(fs_node_t *node, uint8_t *dest, fs_node_t *src);
+void fs_umount(fs_node_t *node, uint8_t *dest);
 uint32_t fs_cutdir(char *name);
 void fs_cut_slashes(char *name);
 bool fs_contains_slash(char *name);
