@@ -123,6 +123,7 @@ void kernel(multiboot_info_t *info)
     for (uint32_t i = 0; i < info->mods_count; i++)
         ramfs_add((void *)KERNEL_P2V(modules[i].mod_start), (void *)KERNEL_P2V(modules[i].mod_end));
     fs_root = ilfs_create("ramdisk0");
+    fs_mount(fs_root, "dev", fs_dev);
     uhci_install();
     syscall_install();
     keyboard_install();
@@ -130,7 +131,7 @@ void kernel(multiboot_info_t *info)
     cpuid_install();
     fpu_install();
     bios32_install();
-    acpi_install(0xe0000, 0x100000);
+    acpi_install(0xe0000, 0xfffff);
     vga_install();
     vbe_install();
     task_install();

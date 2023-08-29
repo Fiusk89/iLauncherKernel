@@ -118,11 +118,17 @@ fs_node_t *ilfs_create(uint8_t *dev)
     ret->flags = FS_DIRECTORY;
     ret->ptr = (fs_node_t *)kmalloc(sizeof(fs_node_t));
     memset(ret->ptr, 0, sizeof(fs_node_t));
+    memcpy(ret->ptr->name, fs_dev->name, 256);
     memcpy(ret->ptr->dev, dev, strlen(dev));
+    ret->ptr->flags = FS_DIRECTORY;
     ret->ptr->open = ilfs_open;
     ret->ptr->close = ilfs_close;
     ret->ptr->read = ilfs_read;
-    ilfs_add_nodes(ret->ptr, "\0", sizeof(ilfs_header_t));
+    ret->ptr->next = (fs_node_t *)kmalloc(sizeof(fs_node_t));
+    memcpy(ret->ptr->next, ret->ptr, sizeof(fs_node_t));
+    ret->ptr->next->next = (fs_node_t *)NULL;
+    ret->ptr->next->prev = ret->ptr;
+    ilfs_add_nodes(ret->ptr->next, "\0", sizeof(ilfs_header_t));
     ilfs_list_nodes(ret->ptr);
     return ret;
 }
