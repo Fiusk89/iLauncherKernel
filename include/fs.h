@@ -2,6 +2,7 @@
 #ifndef FS_H
 #define FS_H
 #include <kernel.h>
+#define FS_BIT(x) (1 << (x))
 #define FS_FILE 0x01
 #define FS_DIRECTORY 0x02
 #define FS_CHARDEVICE 0x03

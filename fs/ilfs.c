@@ -129,6 +129,5 @@ fs_node_t *ilfs_create(uint8_t *dev)
     ret->ptr->next->next = (fs_node_t *)NULL;
     ret->ptr->next->prev = ret->ptr;
     ilfs_add_nodes(ret->ptr->next, "\0", sizeof(ilfs_header_t));
-    ilfs_list_nodes(ret->ptr);
     return ret;
 }
