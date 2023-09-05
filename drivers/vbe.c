@@ -115,8 +115,8 @@ void vbe_install()
     screen_mode_info_t *tmp = vbe_modes->video_modes;
     while (tmp->next)
     {
-        if (tmp->height * tmp->pitch >= mode_xy && tmp->bpp >= 24)
-            vbe_modes->current_video_mode = tmp, mode_xy = tmp->height * tmp->pitch;
+        if (tmp->pitch * tmp->height >= mode_xy && tmp->bpp >= 24)
+            vbe_modes->current_video_mode = tmp, mode_xy = tmp->pitch * tmp->height;
         tmp = tmp->next;
     }
     vbe_set_mode(vbe_modes->current_video_mode->mode);

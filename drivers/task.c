@@ -44,12 +44,26 @@ bool task_node_remove(uint32_t pid)
     if (!start_task || !pid)
         return true;
     task_t *tmp_task = start_task;
-    while (tmp_task->next->pid != pid && tmp_task->next)
+    while (tmp_task)
+    {
+        if (tmp_task->pid == pid)
+        {
+            tmp_task = tmp_task->prev;
+            break;
+        }
         tmp_task = tmp_task->next;
-    if (!tmp_task->next || tmp_task->next->pid != pid)
+    }
+    if (!tmp_task || tmp_task->next->pid != pid)
         return true;
-    tmp_task->next->next->prev = tmp_task->next->prev;
-    tmp_task->next = tmp_task->next->next;
+    if (tmp_task->next->next)
+    {
+        tmp_task->next->next->prev = tmp_task;
+        tmp_task->next = tmp_task->next->next;
+    }
+    else
+    {
+        tmp_task->next = (task_t *)NULL;
+    }
     return false;
 }
 
@@ -61,9 +75,10 @@ void task_idle()
 
 void task_exit()
 {
+    kprintf("Exit %u\n", current_task->pid);
     current_task->state = TASK_TERMINATED;
     while (true)
-        kprintf("Wait\n");
+        ;
 }
 
 task_t *task_get()
@@ -84,19 +99,6 @@ void task_remove(task_t *task, uint8_t state, uint32_t state_info, uint32_t valu
     if (start_task != task)
         task_free(task);
     node_prev->ready = true;
-}
-
-static void task_helper()
-{
-    task_function_t function = (task_function_t)current_task->eip;
-    uint64_t *flags = (uint64_t *)current_task->flags;
-    uint64_t value = 0;
-    if (!flags)
-        value = function(NULL, NULL);
-    else
-        value = function((int32_t)flags[0], (int8_t **)flags[1]);
-    task_remove(current_task, TASK_TERMINATED, NULL, value);
-    schedule();
 }
 
 task_t *task_create(uint8_t *name, void *function, void *flags)
@@ -163,14 +165,15 @@ void schedule()
     if (current_task->ready)
     {
         current_task = current_task->next;
-        if (current_task->state == TASK_PAUSED)
-            current_task = current_task->next;
         if (current_task->state == TASK_TERMINATED)
         {
-            current_task = current_task->next;
-            task_node_remove(current_task->prev->pid);
-            // task_free(current_task->prev);
+            task_t *next_task = current_task->next;
+            task_node_remove(current_task->pid);
+            task_free(current_task);
+            current_task = next_task;
         }
+        if (current_task->state == TASK_PAUSED)
+            current_task = current_task->next;
     }
     else
     {
@@ -187,6 +190,8 @@ void task_install()
     start_task = current_task = (task_t *)kmalloc(sizeof(task_t));
     memset(current_task, 0, sizeof(task_t));
     current_task->ready = true;
+    current_task->context.page = kernel_directory;
+    current_task->context.heap = kheap;
     strcpy(current_task->name, "iLauncherKernel");
     int8_t exceptions[] = {
         0,

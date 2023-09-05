@@ -1,4 +1,5 @@
 bits 32
+section .text
 extern isr_handler, irq_handler
 global isr_exit
 global isr_null
@@ -8,12 +9,13 @@ isr_exit:
     pop fs
     pop es
     pop ds
-    popa
+    popad
     add esp, 8
     iret
 
 %macro ISR_NOERRCODE 1
     global isr%1
+    align 0x1000
     isr%1:
         push 0
         push %1
@@ -22,6 +24,7 @@ isr_exit:
 
 %macro ISR_ERRCODE 1
     global isr%1
+    align 0x1000
     isr%1:
         push %1
         jmp isr_common_stub
@@ -29,6 +32,7 @@ isr_exit:
 
 %macro IRQ 2
     global irq%1
+    align 0x1000
     irq%1:
         push 0
         push %2
@@ -85,11 +89,8 @@ IRQ 13, 45
 IRQ 14, 46
 IRQ 15, 47
 
-isr_null:
-    iret
-
 isr_common_stub:
-    pusha
+    pushad
     push ds
     push es
     push fs
@@ -102,16 +103,10 @@ isr_common_stub:
     mov gs, bx
     pop ebx
     call isr_handler
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    popa
-    add esp, 8
-    iret
+    jmp isr_exit
 
 irq_common_stub:
-    pusha
+    pushad
     push ds
     push es
     push fs
@@ -124,10 +119,4 @@ irq_common_stub:
     mov gs, bx
     pop ebx
     call irq_handler
-    pop gs
-    pop fs
-    pop es
-    pop ds
-    popa
-    add esp, 8
-    iret
+    jmp isr_exit
