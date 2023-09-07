@@ -141,6 +141,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
 {
     if (!heap || !size)
         return (void *)NULL;
+    uint64_t old_size = size;
     if (align)
         size = KERNEL_ALIGN(size + align, align);
     size += sizeof(uint64_t);
@@ -163,6 +164,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
         uint64_t address = NULL;
         heap_node->is_free = false;
         heap_node->align = align;
+        heap_node->ptr_size = old_size;
         if (align)
             address = KERNEL_ALIGN((uint64_t)heap_node + sizeof(heap_node_t) + sizeof(uint64_t), align);
         else
@@ -189,6 +191,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
         heap_node->signature = HEAP_SIGNATURE;
         heap_node->is_free = false;
         heap_node->size = size;
+        heap_node->ptr_size = old_size;
         heap_node->align = align;
         heap_node->next = new_heap_node;
         if (align)
@@ -215,10 +218,10 @@ void *heap_mexpand(heap_t *heap, void *ptr, int64_t size)
     }
     else
     {
-        void *new_ptr = heap_malloc(heap, (node->size - sizeof(uint64_t)) + size, node->align);
+        void *new_ptr = heap_malloc(heap, node->ptr_size + size, node->align);
         if (!new_ptr)
             return (void *)NULL;
-        memcpy(new_ptr, ptr, node->size - sizeof(uint64_t));
+        memcpy(new_ptr, ptr, node->ptr_size);
         heap_mfree(heap, ptr);
         return new_ptr;
     }
@@ -241,7 +244,7 @@ void *heap_mrealloc(heap_t *heap, void *ptr, uint64_t size)
         void *new_ptr = heap_malloc(heap, size, node->align);
         if (!new_ptr)
             return (void *)NULL;
-        memcpy(new_ptr, ptr, node->size - sizeof(uint64_t));
+        memcpy(new_ptr, ptr, node->ptr_size);
         heap_mfree(heap, ptr);
         return new_ptr;
     }
@@ -254,10 +257,10 @@ void *heap_mclone(heap_t *heap, void *ptr)
     heap_node_t *node = (heap_node_t *)(*(uint64_t *)((uint64_t)ptr - sizeof(uint64_t)));
     if (node->signature != HEAP_SIGNATURE)
         return (void *)NULL;
-    void *new_ptr = heap_malloc(heap, node->size - sizeof(uint64_t), node->align);
+    void *new_ptr = heap_malloc(heap, node->ptr_size, node->align);
     if (!new_ptr)
         return (void *)NULL;
-    memcpy(new_ptr, ptr, node->size - sizeof(uint64_t));
+    memcpy(new_ptr, ptr, node->ptr_size);
     return new_ptr;
 }
 
