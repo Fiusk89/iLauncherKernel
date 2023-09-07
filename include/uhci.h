@@ -12,7 +12,7 @@ typedef struct uhci
     uint16_t interrupt_enable;
     uint16_t frame_number;
     uint32_t frame_list_base_address;
-    uint8_t start_frame_modify;
+    uint16_t start_frame_modify;
     uint16_t port1, port2;
     struct uhci *prev;
     struct uhci *next;
