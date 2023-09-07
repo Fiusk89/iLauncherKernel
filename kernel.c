@@ -72,6 +72,8 @@ void loop()
     kprintf("USED MEMORY: %fMB;\nFREE MEMORY: %fMB;\n",
             (float)heap_get_used_size(kheap) / (float)MB,
             (float)heap_get_free_size(kheap) / (float)MB);
+    kprintf("FLOAT: %f\n", 1.0f);
+    kprintf("FLOAT: %f\n", 2.0f / 8.0f);
     while (true)
     {
         key = keyboard_get_key();
@@ -119,6 +121,15 @@ void kernel(multiboot_info_t *info)
     pit_install();
     page_install();
     kheap_install();
+#ifdef HEAP_TEST
+    heap_show_all_nodes(kheap);
+    for (size_t i = 0; i < 8; i++)
+        kfree((void *)kmalloc((uint32_t)rand() % MB));
+    heap_show_all_nodes(kheap);
+    pit_delay = 10000;
+    while (pit_delay)
+        ;
+#endif
     devfs_install();
     for (uint32_t i = 0; i < info->mods_count; i++)
         ramfs_add((void *)KERNEL_P2V(modules[i].mod_start), (void *)KERNEL_P2V(modules[i].mod_end));

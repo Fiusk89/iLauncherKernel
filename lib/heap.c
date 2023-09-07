@@ -152,7 +152,7 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
     {
         if (heap_node->size >= size && heap_node->is_free)
         {
-            if (heap_node->size - size >= sizeof(heap_node_t) + size)
+            if (heap_node->size - size >= full_size + sizeof(heap_node_t))
                 break;
             else if (heap_node->size == size)
                 break;
