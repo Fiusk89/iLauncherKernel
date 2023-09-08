@@ -204,29 +204,6 @@ void *heap_malloc(heap_t *heap, uint64_t size, uint16_t align)
     return (void *)NULL;
 }
 
-void *heap_mexpand(heap_t *heap, void *ptr, int64_t size)
-{
-    if (!heap || !ptr)
-        return (void *)NULL;
-    heap_node_t *node = (heap_node_t *)(*(uint64_t *)((uint64_t)ptr - sizeof(uint64_t)));
-    if (node->signature != HEAP_SIGNATURE)
-        return (void *)NULL;
-    if (!size)
-    {
-        heap_mfree(heap, ptr);
-        return (void *)NULL;
-    }
-    else
-    {
-        void *new_ptr = heap_malloc(heap, node->ptr_size + size, node->align);
-        if (!new_ptr)
-            return (void *)NULL;
-        memcpy(new_ptr, ptr, node->ptr_size);
-        heap_mfree(heap, ptr);
-        return new_ptr;
-    }
-}
-
 void *heap_mrealloc(heap_t *heap, void *ptr, uint64_t size)
 {
     if (!heap || !ptr)
@@ -236,18 +213,30 @@ void *heap_mrealloc(heap_t *heap, void *ptr, uint64_t size)
         return (void *)NULL;
     if (!size)
     {
-        heap_mfree(heap, ptr);
-        return (void *)NULL;
+        goto error;
     }
     else
     {
         void *new_ptr = heap_malloc(heap, size, node->align);
         if (!new_ptr)
-            return (void *)NULL;
+            goto error;
         memcpy(new_ptr, ptr, node->ptr_size);
         heap_mfree(heap, ptr);
         return new_ptr;
     }
+error:
+    heap_mfree(heap, ptr);
+    return (void *)NULL;
+}
+
+void *heap_mexpand(heap_t *heap, void *ptr, int64_t size)
+{
+    if (!heap || !ptr)
+        return (void *)NULL;
+    heap_node_t *node = (heap_node_t *)(*(uint64_t *)((uint64_t)ptr - sizeof(uint64_t)));
+    if (node->signature != HEAP_SIGNATURE)
+        return (void *)NULL;
+    return heap_mrealloc(heap, ptr, node->ptr_size + size);
 }
 
 void *heap_mclone(heap_t *heap, void *ptr)

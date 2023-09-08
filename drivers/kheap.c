@@ -65,7 +65,12 @@ uint32_t kmalloc(uint32_t size)
 
 uint32_t krealloc(void *ptr, uint32_t size)
 {
-    return (uint32_t)heap_mrealloc(kheap, ptr, size);
+    return (uint32_t)heap_mrealloc(kheap, ptr, (uint64_t)size);
+}
+
+uint32_t kexpand(void *ptr, int32_t size)
+{
+    return (uint32_t)heap_mexpand(kheap, ptr, (int64_t)size);
 }
 
 uint32_t kclone(void *ptr)
