@@ -9,17 +9,43 @@ void uhci_handler(register_t *regs)
     kprintf("[UHCI]: IRQ %u\n", regs->int_no - 32);
 }
 
-void uhci_init_port(uint32_t port)
+bool uhci_check_port(uint32_t port)
 {
-    uint16_t port_value = ((inw(port) | 0x200) & 0x324e) + 0x80;
-    outw(port, port_value);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
-    outw(port, port_value & 0xfdff);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
+    if (~inw(port) & 0x80)
+        return false;
+    outw(port, inw(port) & ~0x80);
+    if (~inw(port) & 0x80)
+        return false;
+    outw(port, inw(port) | 0x80);
+    if (~inw(port) & 0x80)
+        return false;
+    outw(port, inw(port) | 0x0A);
+    if (inw(port) & 0x0A)
+        return false;
+    return true;
+}
+
+bool uhci_reset_port(uint32_t port)
+{
+    uint8_t i = 10;
+    outw(port, inw(port) | (1 << 9));
+    pit_sleep(100);
+    outw(port, inw(port) & ~(1 << 9));
+    while (i--)
+    {
+        uint16_t val = inw(port);
+        if (~val & (1 << 0))
+            return false;
+        if (val & ((1 << 3) | (1 << 1)))
+        {
+            outw(port, val & UHCI_PORT_WRITE_MASK);
+            continue;
+        }
+        if (val & (1 << 2))
+            return true;
+        outw(port, val | (1 << 2));
+    }
+    return false;
 }
 
 void uhci_add(uint8_t bus, uint8_t slot, uint8_t function)
@@ -37,27 +63,22 @@ void uhci_add(uint8_t bus, uint8_t slot, uint8_t function)
     new_uhci_driver->frame_number = base + 0x06;
     new_uhci_driver->frame_list_base_address = base + 0x08;
     new_uhci_driver->start_frame_modify = base + 0x0c;
-    new_uhci_driver->port1 = base + 0x10;
-    new_uhci_driver->port2 = base + 0x12;
+    new_uhci_driver->port = base + 0x10;
     pci_write(bus, slot, function, 0x04, 0x05);
     for (uint8_t i = 0; i < 5; i++)
     {
-        outw(new_uhci_driver->command, 0x0004);
-        pit_delay = 100;
-        while (pit_delay)
-            ;
-        outw(new_uhci_driver->command, 0x0000);
+        outw(new_uhci_driver->command, 0x04);
+        pit_sleep(100);
+        outw(new_uhci_driver->command, 0x00);
     }
-    if (inw(new_uhci_driver->command) != 0x0000)
+    if (inw(new_uhci_driver->command) != 0x00)
         goto error;
-    if (inw(new_uhci_driver->status) != 0x0020)
+    if (inw(new_uhci_driver->status) != 0x20)
         goto error;
     outw(new_uhci_driver->status, 0xff);
     uint8_t sof_backup = inb(new_uhci_driver->start_frame_modify);
     outw(new_uhci_driver->command, 0x02);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
+    pit_sleep(100);
     if (inw(new_uhci_driver->command) & 0x02)
         goto error;
     outb(new_uhci_driver->start_frame_modify, sof_backup);
