@@ -121,6 +121,8 @@ void kernel(multiboot_info_t *info)
     pit_install();
     page_install();
     kheap_install();
+    pci_install();
+    task_install();
 #ifdef HEAP_TEST
     heap_show_all_nodes(kheap);
     for (size_t i = 0; i < 8; i++)
@@ -145,7 +147,6 @@ void kernel(multiboot_info_t *info)
     acpi_install(0xe0000, 0xfffff);
     vga_install();
     vbe_install();
-    task_install();
     screen_install();
     extern uint32_t VIDEO_MEMORY;
     extern uint16_t vga_width, vga_height;

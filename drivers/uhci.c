@@ -113,7 +113,7 @@ void uhci_add(uint8_t bus, uint8_t slot, uint8_t function)
                                                       &new_uhci_dev->frame_list_physical);
     memset(new_uhci_dev->frame_list, 0, sizeof(uint32_t) * 1024);
     new_uhci_dev->stack_list = (uhci_queue_t *)kmalloc_ap(sizeof(uhci_queue_t) * UHCI_QUEUE_LEN,
-                                                          16,
+                                                          0x10,
                                                           &new_uhci_dev->stack_list_physical);
     memset(new_uhci_dev->stack_list, 0, sizeof(uhci_queue_t) * UHCI_QUEUE_LEN);
     for (uint8_t i = 0; i < UHCI_QUEUE_LEN; i++)
@@ -203,6 +203,37 @@ error:
     return;
 }
 
+void uhci_service()
+{
+    uhci_t *tmp_dev = uhci_dev;
+    while (true)
+    {
+        if (!tmp_dev)
+        {
+            tmp_dev = uhci_dev;
+            continue;
+        }
+        for (uint32_t port = tmp_dev->port; uhci_check_port(port); port += 2)
+        {
+            uint16_t port = inw(port);
+            if (port & (1 << 1))
+            {
+                outw(port, 1 << 1);
+                if (port & (1 << 0))
+                {
+                    uhci_reset_port(port);
+                    kprintf("UHCI: Connected Device");
+                }
+                else
+                {
+                    kprintf("UHCI: Disconnected Device");
+                }
+            }
+        }
+        tmp_dev = tmp_dev->next;
+    }
+}
+
 void uhci_install()
 {
     uint32_t *uhci_devices = pci_find_devices(3, 0x0C, 0x03, 0x00);
@@ -218,4 +249,5 @@ void uhci_install()
         uhci_add(uhci_devices[i] & 0xff, (uhci_devices[i] >> 8) & 0xff, (uhci_devices[i] >> 16) & 0xff);
     }
     kfree(uhci_devices);
+    task_add(task_create("UHCI", uhci_service, (void *)NULL));
 }
