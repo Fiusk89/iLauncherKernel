@@ -10,6 +10,7 @@ CC_FLAGS := -fno-stack-protector\
 LD_SOURCES := *.lib *.asm_o *.o
 QEMU_FLAGS := -machine pc\
 			  -vga cirrus\
+			  -usb -device usb-kbd\
 			  -m 256M
 
 default: i386-build
