@@ -9,6 +9,24 @@
 #define UHCI_STATUS_USB_ERROR (1 << 1)
 #define UHCI_STATUS_USBINT (1 << 0)
 #define UHCI_PORT_WRITE_MASK 0x124E
+#define UHCI_PORT_CONNECTION (1 << 0)
+#define UHCI_PORT_CONNECTION_CHANGE (1 << 1)
+#define UHCI_PORT_ENABLE (1 << 2)
+#define UHCI_PORT_ENABLE_CHANGE (1 << 3)
+#define UHCI_PORT_LS (3 << 4)
+#define UHCI_PORT_RD (1 << 6)
+#define UHCI_PORT_LSDA (1 << 8)
+#define UHCI_PORT_RESET (1 << 9)
+#define UHCI_PORT_SUSP (1 << 12)
+#define UHCI_PORT_RWC (PORT_CONNECTION_CHANGE | PORT_ENABLE_CHANGE)
+#define UHCI_CMD_RUN_STOP (1 << 0)
+#define UHCI_CMD_HOST_CONTROLLER_RESET (1 << 1)
+#define UHCI_CMD_GLOBAL_RESET (1 << 2)
+#define UHCI_CMD_ENTER_GLOBAL_SUSPEND_RESUME (1 << 3)
+#define UHCI_CMD_FORCE_GLOBAL_RESUME (1 << 4)
+#define UHCI_CMD_SOFTWARE_DEBUG (1 << 5)
+#define UHCI_CMD_CONFIGURE_FLAG (1 << 6)
+#define UHCI_CMD_MAX_PACKET (1 << 7)
 #define UHCI_QUEUE_Q128 0
 #define UHCI_QUEUE_Q64 1
 #define UHCI_QUEUE_Q32 2
@@ -46,6 +64,7 @@ typedef struct uhci
     uint32_t frame_list_base_address; // FRBASEADD
     uint32_t start_frame_modify;      // SOFMOD
     uint32_t port;                    // PORT
+    uint32_t legacy_support;          // LEGSUP
     struct uhci *prev;
     struct uhci *next;
 } __attribute__((packed)) uhci_t;

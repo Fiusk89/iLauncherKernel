@@ -145,9 +145,9 @@ void uhci_add(uint8_t bus, uint8_t slot, uint8_t function)
     new_uhci_dev->frame_list_base_address = base + 0x08;
     new_uhci_dev->start_frame_modify = base + 0x0c;
     new_uhci_dev->port = base + 0x10;
+    new_uhci_dev->legacy_support = 0xc0;
     if (uhci_check_irq(new_uhci_dev->irq))
         goto error;
-    pci_write(bus, slot, function, 0x04, 0x05);
     for (uint8_t i = 0; i < 5; i++)
     {
         outw(new_uhci_dev->command, 0x04);
@@ -158,29 +158,14 @@ void uhci_add(uint8_t bus, uint8_t slot, uint8_t function)
         goto error;
     if (inw(new_uhci_dev->status) != 0x20)
         goto error;
-    outw(new_uhci_dev->status, 0xff);
+    outw(new_uhci_dev->status, 0xffff);
     uint8_t sof_backup = inb(new_uhci_dev->start_frame_modify);
     outw(new_uhci_dev->command, 0x02);
     pit_sleep(100);
     if (inw(new_uhci_dev->command) & 0x02)
         goto error;
     outb(new_uhci_dev->start_frame_modify, sof_backup);
-    pci_write(bus, slot, function, 0xC0, 0xAF00);
-    outw(new_uhci_dev->interrupt_enable, 0x0f);
-    outw(new_uhci_dev->frame_number, 0x00);
-    outl(new_uhci_dev->frame_list_base_address, new_uhci_dev->frame_list_physical);
-    outw(new_uhci_dev->status, 0xffff);
-    outw(new_uhci_dev->command, (1 << 7) | (1 << 6) | (1 << 0));
-    for (uint32_t port = new_uhci_dev->port; uhci_check_port(port); port += 2)
-    {
-        if (uhci_reset_port(port))
-        {
-            if (inw(port) & 1)
-            {
-                kprintf("\tNew Device: %u\n", port);
-            }
-        }
-    }
+    outw(new_uhci_dev->legacy_support, 0x8f00);
     if (uhci_dev)
     {
         uhci_t *tmp = uhci_dev;
@@ -194,6 +179,12 @@ void uhci_add(uint8_t bus, uint8_t slot, uint8_t function)
         uhci_dev = new_uhci_dev;
     }
     irq_add_handler(new_uhci_dev->irq, uhci_handler);
+    outw(new_uhci_dev->interrupt_enable, 0x0f);
+    outw(new_uhci_dev->frame_number, 0x00);
+    outl(new_uhci_dev->frame_list_base_address, new_uhci_dev->frame_list_physical);
+    outw(new_uhci_dev->status, 0xffff);
+    outw(new_uhci_dev->command, UHCI_CMD_MAX_PACKET | UHCI_CMD_CONFIGURE_FLAG | UHCI_CMD_RUN_STOP);
+    pit_sleep(100);
     return;
 error:
     kprintf("Error\n");
@@ -216,10 +207,10 @@ void uhci_service()
         for (uint32_t port = tmp_dev->port; uhci_check_port(port); port += 2)
         {
             uint16_t port = inw(port);
-            if (port & (1 << 1))
+            if (port & UHCI_PORT_CONNECTION_CHANGE)
             {
-                outw(port, 1 << 1);
-                if (port & (1 << 0))
+                outw(port, UHCI_PORT_CONNECTION_CHANGE);
+                if (port & UHCI_PORT_CONNECTION)
                 {
                     uhci_reset_port(port);
                     kprintf("UHCI: Connected Device");
