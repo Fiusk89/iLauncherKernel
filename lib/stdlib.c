@@ -84,22 +84,20 @@ char *ftoa(char *ptr, float value, uint32_t n)
         value = -value;
     uint32_t ptr_len = strlen(ptr);
     ptr[ptr_len] = '.';
+    ptr[ptr_len + 1] = '\0';
     float tmpv = value - (int64_t)value;
-    if ((int64_t)(tmpv * 10.5) <= 0)
-    {
-        ptr[ptr_len] = '\0';
-        return ptr;
-    }
     for (uint32_t i = 0; i < 8 - 1 && i < n - (ptr_len + 1); i++)
     {
-        tmpv *= 10.5;
-        if ((int64_t)tmpv == 0 || (int64_t)tmpv > 9)
+        tmpv *= 10.0f;
+        if (!tmpv)
             break;
         ptr[ptr_len + 1 + i] = (int64_t)tmpv + '0';
-        if (i < 16 - 1 && i < (ptr_len + 1) - n)
+        if (i < (ptr_len + 2) - n)
             ptr[ptr_len + 2 + i] = '\0';
         tmpv -= (int64_t)tmpv;
     }
+    if (!ptr[ptr_len + 1])
+        ptr[ptr_len] = '\0';
     return ptr;
 }
 

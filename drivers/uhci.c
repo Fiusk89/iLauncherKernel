@@ -4,89 +4,224 @@
 
 uhci_t *uhci_dev;
 
-void uhci_handler(register_t *regs)
+bool uhci_check_irq(uint8_t irq)
 {
-    kprintf("[UHCI]: IRQ %u\n", regs->int_no - 32);
-    irq_remove_handler(regs->int_no - 32);
+    uhci_t *tmp_dev = uhci_dev;
+    if (!tmp_dev)
+        return false;
+    while (tmp_dev)
+    {
+        if (tmp_dev->irq == irq)
+            return true;
+        tmp_dev = tmp_dev->next;
+    }
+    return false;
 }
 
-void uhci_init_port(uint32_t port)
+void uhci_handler(register_t *regs)
 {
-    uint16_t port_value = ((inw(port) | 0x200) & 0x324e) + 0x80;
-    outw(port, port_value);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
-    outw(port, port_value & 0xfdff);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
+    uint16_t status = 0, val = 0;
+    uhci_t *tmp_dev = uhci_dev;
+    while (tmp_dev)
+    {
+        if (tmp_dev->irq == regs->int_no - 32)
+        {
+            val = inw(tmp_dev->status);
+            break;
+        }
+        tmp_dev = tmp_dev->next;
+    }
+    if (!tmp_dev || !val)
+        return;
+    if (val & UHCI_STATUS_USBINT)
+    {
+        status |= UHCI_STATUS_USBINT;
+    }
+    if (val & UHCI_STATUS_RESUME_DETECT)
+    {
+        status |= UHCI_STATUS_RESUME_DETECT;
+    }
+    if (val & UHCI_STATUS_HCHALTED)
+    {
+        status |= UHCI_STATUS_HCHALTED;
+    }
+    if (val & UHCI_STATUS_HC_PROCESS_ERROR)
+    {
+        status |= UHCI_STATUS_HC_PROCESS_ERROR;
+    }
+    if (val & UHCI_STATUS_USB_ERROR)
+    {
+        status |= UHCI_STATUS_USB_ERROR;
+    }
+    if (val & UHCI_STATUS_HOST_SYSTEM_ERROR)
+    {
+        status |= UHCI_STATUS_HOST_SYSTEM_ERROR;
+    }
+    outw(tmp_dev->status, status);
+    kprintf("[UHCI]: IRQ %u\n", regs->int_no - 32);
+}
+
+bool uhci_check_port(uint32_t port)
+{
+    if (~inw(port) & 0x80)
+        return false;
+    outw(port, inw(port) & ~0x80);
+    if (~inw(port) & 0x80)
+        return false;
+    outw(port, inw(port) | 0x80);
+    if (~inw(port) & 0x80)
+        return false;
+    outw(port, inw(port) | 0x0A);
+    if (inw(port) & 0x0A)
+        return false;
+    return true;
+}
+
+bool uhci_reset_port(uint32_t port)
+{
+    uint8_t i = 10;
+    outw(port, inw(port) | (1 << 9));
+    pit_sleep(100);
+    outw(port, inw(port) & ~(1 << 9));
+    while (i--)
+    {
+        uint16_t val = inw(port);
+        if (~val & (1 << 0))
+            return false;
+        if (val & ((1 << 3) | (1 << 1)))
+        {
+            outw(port, val & UHCI_PORT_WRITE_MASK);
+            continue;
+        }
+        if (val & (1 << 2))
+            return true;
+        outw(port, val | (1 << 2));
+    }
+    return false;
 }
 
 void uhci_add(uint8_t bus, uint8_t slot, uint8_t function)
 {
     if (!bus && !slot && !function)
         return;
-    uhci_t *new_uhci_driver = (uhci_t *)kmalloc(sizeof(uhci_t));
-    memset(new_uhci_driver, 0, sizeof(uhci_t));
-    new_uhci_driver->frame_list = (uint32_t *)kmalloc_a(MAX_FRAME_LIST * sizeof(uint32_t), 0x1000);
-    memset(new_uhci_driver->frame_list, 0, MAX_FRAME_LIST * sizeof(uint32_t));
     uint32_t base = pci_read_bar_address(bus, slot, function, 0x20) & 0xffe0;
     uint32_t version = pci_read_bar_address(bus, slot, function, 0x60);
-    if (version != 0x10)
+    uhci_t *new_uhci_dev = (uhci_t *)kmalloc(sizeof(uhci_t));
+    memset(new_uhci_dev, 0, sizeof(uhci_t));
+    new_uhci_dev->frame_list = (uint32_t *)kmalloc_ap(sizeof(uint32_t) * 1024,
+                                                      0x1000,
+                                                      &new_uhci_dev->frame_list_physical);
+    memset(new_uhci_dev->frame_list, 0, sizeof(uint32_t) * 1024);
+    new_uhci_dev->stack_list = (uhci_queue_t *)kmalloc_ap(sizeof(uhci_queue_t) * UHCI_QUEUE_LEN,
+                                                          0x10,
+                                                          &new_uhci_dev->stack_list_physical);
+    memset(new_uhci_dev->stack_list, 0, sizeof(uhci_queue_t) * UHCI_QUEUE_LEN);
+    for (uint8_t i = 0; i < UHCI_QUEUE_LEN; i++)
     {
-        kfree(new_uhci_driver->frame_list);
-        kfree(new_uhci_driver);
-        kprintf("[UHCI] Unknown Version\n");
-        return;
+        new_uhci_dev->stack_list[i].horizontal = UHCI_QUEUE_STRUCT_T;
+        new_uhci_dev->stack_list[i].vertical = UHCI_QUEUE_STRUCT_T;
     }
-    new_uhci_driver->irq = (uint8_t)pci_read_bar_address(bus, slot, function, 0x3C);
-    new_uhci_driver->command = base + 0x00;
-    new_uhci_driver->status = base + 0x02;
-    new_uhci_driver->interrupt_enable = base + 0x04;
-    new_uhci_driver->frame_number = base + 0x06;
-    new_uhci_driver->frame_list_base_address = base + 0x08;
-    new_uhci_driver->start_frame_modify = base + 0x0c;
-    new_uhci_driver->port1 = base + 0x10;
-    new_uhci_driver->port2 = base + 0x12;
-    for (uint16_t i = 0; i < MAX_FRAME_LIST; i++)
-        new_uhci_driver->frame_list[i] = 0x03;
-    outw(new_uhci_driver->command, 0x04);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
-    outw(new_uhci_driver->command, 0x00);
-    outw(new_uhci_driver->status, 0x00);
-    outw(new_uhci_driver->interrupt_enable, 0x00);
-    outw(new_uhci_driver->frame_number, 0x00);
-    outl(new_uhci_driver->frame_list_base_address, (uint32_t)new_uhci_driver->frame_list);
-    outb(new_uhci_driver->start_frame_modify, 0x40);
-    outw(new_uhci_driver->command, 0x00);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
-    outw(new_uhci_driver->frame_number, 0x00);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
-    outw(new_uhci_driver->command, 0x01);
-    pit_delay = 100;
-    while (pit_delay)
-        ;
-    uhci_init_port(new_uhci_driver->port1);
-    uhci_init_port(new_uhci_driver->port2);
-    irq_add_handler(new_uhci_driver->irq, uhci_handler);
+    for (uint8_t i = 0; i < UHCI_QUEUE_LEN - 1; i++)
+    {
+        new_uhci_dev->stack_list[i].horizontal =
+            (new_uhci_dev->stack_list_physical + (i + 1) * sizeof(uhci_queue_t)) | UHCI_QUEUE_STRUCT_Q;
+    }
+    for (uint16_t i = 0; i < 1024; i++)
+    {
+        uint8_t queue_start = UHCI_QUEUE_Q1;
+        for (uint16_t j = 2; j < 256; j *= 2)
+        {
+            if (((i + 1) % j) == 0)
+                queue_start--;
+        }
+        new_uhci_dev->frame_list[i] =
+            (new_uhci_dev->stack_list_physical + queue_start * sizeof(uhci_queue_t)) | UHCI_QUEUE_STRUCT_Q;
+    }
+    new_uhci_dev->irq = (uint8_t)pci_read_bar_address(bus, slot, function, 0x3C);
+    new_uhci_dev->command = base + 0x00;
+    new_uhci_dev->status = base + 0x02;
+    new_uhci_dev->interrupt_enable = base + 0x04;
+    new_uhci_dev->frame_number = base + 0x06;
+    new_uhci_dev->frame_list_base_address = base + 0x08;
+    new_uhci_dev->start_frame_modify = base + 0x0c;
+    new_uhci_dev->port = base + 0x10;
+    new_uhci_dev->legacy_support = 0xc0;
+    if (uhci_check_irq(new_uhci_dev->irq))
+        goto error;
+    for (uint8_t i = 0; i < 5; i++)
+    {
+        outw(new_uhci_dev->command, 0x04);
+        pit_sleep(100);
+        outw(new_uhci_dev->command, 0x00);
+    }
+    if (inw(new_uhci_dev->command) != 0x00)
+        goto error;
+    if (inw(new_uhci_dev->status) != 0x20)
+        goto error;
+    outw(new_uhci_dev->status, 0xffff);
+    uint8_t sof_backup = inb(new_uhci_dev->start_frame_modify);
+    outw(new_uhci_dev->command, 0x02);
+    pit_sleep(100);
+    if (inw(new_uhci_dev->command) & 0x02)
+        goto error;
+    outb(new_uhci_dev->start_frame_modify, sof_backup);
+    outw(new_uhci_dev->legacy_support, 0x8f00);
     if (uhci_dev)
     {
         uhci_t *tmp = uhci_dev;
         while (tmp->next)
             tmp = tmp->next;
-        new_uhci_driver->prev = tmp;
-        tmp->next = new_uhci_driver;
+        new_uhci_dev->prev = tmp;
+        tmp->next = new_uhci_dev;
     }
     else
     {
-        uhci_dev = new_uhci_driver;
+        uhci_dev = new_uhci_dev;
+    }
+    irq_add_handler(new_uhci_dev->irq, uhci_handler);
+    outw(new_uhci_dev->interrupt_enable, 0x0f);
+    outw(new_uhci_dev->frame_number, 0x00);
+    outl(new_uhci_dev->frame_list_base_address, new_uhci_dev->frame_list_physical);
+    outw(new_uhci_dev->status, 0xffff);
+    outw(new_uhci_dev->command, UHCI_CMD_MAX_PACKET | UHCI_CMD_CONFIGURE_FLAG | UHCI_CMD_RUN_STOP);
+    pit_sleep(100);
+    return;
+error:
+    kprintf("Error\n");
+    kfree(new_uhci_dev->frame_list);
+    kfree(new_uhci_dev->stack_list);
+    kfree(new_uhci_dev);
+    return;
+}
+
+void uhci_service()
+{
+    uhci_t *tmp_dev = uhci_dev;
+    while (true)
+    {
+        if (!tmp_dev)
+        {
+            tmp_dev = uhci_dev;
+            continue;
+        }
+        for (uint32_t port = tmp_dev->port; uhci_check_port(port); port += 2)
+        {
+            uint16_t port = inw(port);
+            if (port & UHCI_PORT_CONNECTION_CHANGE)
+            {
+                outw(port, UHCI_PORT_CONNECTION_CHANGE);
+                if (port & UHCI_PORT_CONNECTION)
+                {
+                    uhci_reset_port(port);
+                    kprintf("UHCI: Connected Device");
+                }
+                else
+                {
+                    kprintf("UHCI: Disconnected Device");
+                }
+            }
+        }
+        tmp_dev = tmp_dev->next;
     }
 }
 
@@ -105,4 +240,5 @@ void uhci_install()
         uhci_add(uhci_devices[i] & 0xff, (uhci_devices[i] >> 8) & 0xff, (uhci_devices[i] >> 16) & 0xff);
     }
     kfree(uhci_devices);
+    task_add(task_create("UHCI", uhci_service, (void *)NULL));
 }

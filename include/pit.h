@@ -5,7 +5,7 @@
 #define PIT_FREQUENCY 1193180
 #define PIT_HZ 1000
 typedef uint32_t pit_t;
-extern pit_t pit_ticks, pit_delay;
 
+void pit_sleep(uint32_t);
 void pit_install();
 #endif

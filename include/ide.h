@@ -81,4 +81,6 @@
 #define ATA_READ 0x00
 #define ATA_WRITE 0x01
 
+uint8_t ide_read(uint8_t channel, uint8_t reg);
+void ide_write(uint8_t channel, uint8_t reg, uint8_t value);
 #endif

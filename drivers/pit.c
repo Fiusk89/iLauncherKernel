@@ -14,6 +14,13 @@ void pit_handler(register_t *r)
     }
 }
 
+void pit_sleep(uint32_t time)
+{
+    pit_delay = time;
+    while (pit_delay)
+        ;
+}
+
 void pit_timer_hz(uint32_t hz)
 {
     uint32_t divisor = 1193180 / hz;

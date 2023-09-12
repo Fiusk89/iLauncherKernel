@@ -16,7 +16,7 @@ typedef struct heap_node
 {
     uint64_t signature;
     uint8_t is_free;
-    uint64_t size;
+    uint64_t size, ptr_size;
     uint16_t align;
     struct heap_node *prev;
     struct heap_node *next;
