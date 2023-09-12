@@ -3,6 +3,11 @@
         "typeinfo": "c",
         "random": "c",
         "heap.h": "c",
-        "functional": "c"
+        "functional": "c",
+        "system_error": "c",
+        "array": "c",
+        "tuple": "c",
+        "type_traits": "c",
+        "utility": "c"
     }
 }

@@ -9,6 +9,8 @@ uint16_t inw(uint16_t port);
 void outw(uint16_t port, uint16_t data);
 uint32_t inl(uint16_t port);
 void outl(uint16_t port, uint32_t data);
+void insm(uint16_t port, uint32_t buffer, uint32_t size);
+void outsm(uint16_t port, uint32_t buffer, uint32_t size);
 void io_wait();
 void mm_outb(void *port, uint8_t data);
 uint8_t mm_inb(void *port);

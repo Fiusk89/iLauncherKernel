@@ -11,9 +11,13 @@ LD_SOURCES := *.lib *.asm_o *.o
 QEMU_FLAGS := -machine pc\
 			  -vga cirrus\
 			  -usb -device usb-kbd\
+			  -drive if=ide,file=disk.qcow2\
 			  -m 256M
 
 default: i386-build
+
+all:
+	@make clean i386-build i386-emu
 
 clean:
 	@rm -rf *.o *.asm_o

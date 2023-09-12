@@ -137,6 +137,7 @@ void kernel(multiboot_info_t *info)
         ramfs_add((void *)KERNEL_P2V(modules[i].mod_start), (void *)KERNEL_P2V(modules[i].mod_end));
     fs_root = ilfs_create("ramdisk0");
     fs_mount(fs_root, "dev", fs_dev);
+    ide_install();
     uhci_install();
     syscall_install();
     keyboard_install();

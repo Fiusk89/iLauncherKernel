@@ -83,4 +83,5 @@
 
 uint8_t ide_read(uint8_t channel, uint8_t reg);
 void ide_write(uint8_t channel, uint8_t reg, uint8_t value);
+void ide_install();
 #endif

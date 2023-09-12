@@ -3,16 +3,16 @@
 void outb(uint16_t port, uint8_t data)
 {
     asm volatile("outb %1, %0"
-        :
-        : "dN"(port), "a"(data));
+                 :
+                 : "dN"(port), "a"(data));
 }
 
 uint8_t inb(uint16_t port)
 {
     uint8_t ret;
     asm volatile("inb %1, %0"
-        : "=a"(ret)
-        : "Nd"(port));
+                 : "=a"(ret)
+                 : "Nd"(port));
     return ret;
 }
 
@@ -20,32 +20,44 @@ uint16_t inw(uint16_t port)
 {
     uint16_t rv;
     asm volatile("inw %1, %0"
-        : "=a"(rv)
-        : "dN"(port));
+                 : "=a"(rv)
+                 : "dN"(port));
     return rv;
 }
 
 void outw(uint16_t port, uint16_t data)
 {
     asm volatile("outw %1, %0"
-        :
-        : "dN"(port), "a"(data));
+                 :
+                 : "dN"(port), "a"(data));
 }
 
 uint32_t inl(uint16_t port)
 {
     uint32_t rv;
     asm volatile("inl %%dx, %%eax"
-        : "=a"(rv)
-        : "dN"(port));
+                 : "=a"(rv)
+                 : "dN"(port));
     return rv;
 }
 
 void outl(uint16_t port, uint32_t data)
 {
     asm volatile("outl %%eax, %%dx"
-        :
-        : "dN"(port), "a"(data));
+                 :
+                 : "dN"(port), "a"(data));
+}
+
+void insm(uint16_t port, uint32_t buffer, uint32_t size)
+{
+    asm volatile("rep insw"
+                 : "+d"(buffer), "+c"(size) : "d"(port) : "memory");
+}
+
+void outsm(uint16_t port, uint32_t buffer, uint32_t size)
+{
+    asm volatile("rep outsw"
+                 : "+d"(buffer), "+c"(size) : "d"(port) : "memory");
 }
 
 void io_wait()
